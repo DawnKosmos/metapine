@@ -2,9 +2,10 @@ package ftx
 
 import (
 	"log"
-	"metapine/backend/exchange"
 	"strconv"
 	"time"
+
+	"github.com/DawnKosmos/metapine/backend/exchange"
 )
 
 func (f *FTX) OHCLV(ticker string, resolution int64, st time.Time, et time.Time) ([]exchange.Candle, error) {
@@ -66,7 +67,7 @@ func (f *FTX) getOHCLV(ticker string, res int64, st int64, et int64) ([]exchange
 
 }
 
-//checkResolution looking if the asked resolution is a valid one
+// checkResolution looking if the asked resolution is a valid one
 func checkResolution(res int64) int64 {
 	var newRes int64
 	if res == 3600 || res == 14400 || res == 86400 || res == 300 || res == 60 || res == 900 {

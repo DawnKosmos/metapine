@@ -1,12 +1,12 @@
 package ta
 
-import "metapine/helper/formula"
+import "github.com/DawnKosmos/metapine/helper/formula"
 
 type iff[T any] struct {
 	ERS[T]
 }
 
-//IfS is user when the output is a Series | float64 value
+// IfS is user when the output is a Series | float64 value
 func IfS(con Condition, Then interface{}, Else interface{}) Series {
 	s := new(iff[float64])
 	//Change Types
@@ -47,7 +47,7 @@ func IfS(con Condition, Then interface{}, Else interface{}) Series {
 	return s
 }
 
-//IfC is used when the output has to be a Condition|boolean value
+// IfC is used when the output has to be a Condition|boolean value
 func IfC(con Condition, Then interface{}, Else interface{}) Condition {
 	s := new(iff[bool])
 	//Change Types

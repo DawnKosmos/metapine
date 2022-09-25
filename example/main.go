@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "github.com/DawnKosmos/metapine/backend/series/ta"
 
 func main() {
-	fmt.Println("hellow world")
+	ta.Rsi(nil, 14)
 }

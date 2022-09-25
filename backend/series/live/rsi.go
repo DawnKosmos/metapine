@@ -1,9 +1,9 @@
 package live
 
 import (
-	"metapine/backend/series/ta"
-	"metapine/helper/data"
-	"metapine/helper/formula"
+	"github.com/DawnKosmos/metapine/backend/series/ta"
+	"github.com/DawnKosmos/metapine/helper/data"
+	"github.com/DawnKosmos/metapine/helper/formula"
 )
 
 type rsi struct {

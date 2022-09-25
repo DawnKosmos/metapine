@@ -2,7 +2,8 @@ package ta
 
 import (
 	"log"
-	"metapine/helper/formula"
+
+	"github.com/DawnKosmos/metapine/helper/formula"
 )
 
 type RSI struct {
@@ -37,7 +38,7 @@ func Rsi(src Series, l int) *RSI {
 	return r
 }
 
-//Gets you the avg loss/gain for the rsi calculation
+// Gets you the avg loss/gain for the rsi calculation
 func avgGainLoss(f []float64) ([]float64, []float64) {
 	gain := make([]float64, 0, len(f))
 	loss := make([]float64, 0, len(f))

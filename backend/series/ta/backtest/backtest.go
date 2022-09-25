@@ -1,9 +1,9 @@
 package backtest
 
 import (
-	"metapine/backend/exchange"
-	"metapine/backend/series/ta"
-	"metapine/helper/formula"
+	"github.com/DawnKosmos/metapine/backend/exchange"
+	"github.com/DawnKosmos/metapine/backend/series/ta"
+	"github.com/DawnKosmos/metapine/helper/formula"
 )
 
 const LONG = true

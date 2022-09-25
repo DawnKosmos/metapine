@@ -3,10 +3,11 @@ package backtest
 import (
 	"fmt"
 	"math"
-	"metapine/backend/exchange"
-	"metapine/backend/series/ta"
-	"metapine/helper/formula"
 	"time"
+
+	"github.com/DawnKosmos/metapine/backend/exchange"
+	"github.com/DawnKosmos/metapine/backend/series/ta"
+	"github.com/DawnKosmos/metapine/helper/formula"
 )
 
 //fastBacktest should be used it you are permutation massive amounts of indicators

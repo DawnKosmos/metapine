@@ -1,8 +1,9 @@
 package ta
 
 import (
-	"metapine/backend/exchange"
 	"time"
+
+	"github.com/DawnKosmos/metapine/backend/exchange"
 )
 
 type Chart interface {
@@ -19,7 +20,7 @@ type OHCLV struct {
 func NewOHCLV(e exchange.CandleProvider, ticker string, start time.Time, end time.Time, resolution int64) *OHCLV {
 	o := new(OHCLV)
 	o.res = resolution
-	o.ch = e.OHCLV(ticker, resolution, start, end)
+	o.ch, _ = e.OHCLV(ticker, resolution, start, end)
 	o.st = o.ch[0].StartTime.Unix()
 	return o
 }
@@ -41,7 +42,7 @@ func ChartSources(e Chart) (o, h, c, l, v Series) {
 	ch := e.Data()
 	for i, c := range ch {
 		ff[0][i], ff[1][i], ff[2][i], ff[3][i], ff[4][i] = c.Open, c.High, c.Close, c.Low, c.Volume
-	}d
+	}
 	o = empty(ff[0], e.StartTime(), e.Resolution())
 	h = empty(ff[1], e.StartTime(), e.Resolution())
 	c = empty(ff[2], e.StartTime(), e.Resolution())

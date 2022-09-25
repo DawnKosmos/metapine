@@ -2,7 +2,8 @@ package ta
 
 import (
 	"log"
-	"metapine/helper/formula"
+
+	"github.com/DawnKosmos/metapine/helper/formula"
 )
 
 type HIGHEST struct {

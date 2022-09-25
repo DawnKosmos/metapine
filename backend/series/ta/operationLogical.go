@@ -1,6 +1,6 @@
 package ta
 
-import "metapine/helper/formula"
+import "github.com/DawnKosmos/metapine/helper/formula"
 
 type LOGICAL struct {
 	ERS[bool]

@@ -1,6 +1,6 @@
 package ta
 
-import "metapine/backend/exchange"
+import "github.com/DawnKosmos/metapine/backend/exchange"
 
 type source struct {
 	ERS[float64]

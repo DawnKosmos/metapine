@@ -1,7 +1,7 @@
 package live
 
 import (
-	"metapine/backend/series/ta"
+	"github.com/DawnKosmos/metapine/backend/series/ta"
 )
 
 type Series interface {

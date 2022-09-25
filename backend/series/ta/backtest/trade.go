@@ -2,8 +2,9 @@ package backtest
 
 import (
 	"errors"
-	"metapine/backend/exchange"
 	"time"
+
+	"github.com/DawnKosmos/metapine/backend/exchange"
 )
 
 type SafeFloat struct {

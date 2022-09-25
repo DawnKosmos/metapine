@@ -1,6 +1,6 @@
 package ta
 
-import "metapine/helper/formula"
+import "github.com/DawnKosmos/metapine/helper/formula"
 
 type comp struct {
 	ERS[bool]
@@ -46,7 +46,7 @@ func Comp(op func(float64, float64) bool, src Series, v interface{}) Condition {
 	return &s
 }
 
-//Smaller (src,v) => src < v
+// Smaller (src,v) => src < v
 func Smaller(src Series, v interface{}) Condition {
 	o := func(v1 float64, v2 float64) bool {
 		return v1 < v2
@@ -54,7 +54,7 @@ func Smaller(src Series, v interface{}) Condition {
 	return Comp(o, src, v)
 }
 
-//Greater (src,v) => src > v
+// Greater (src,v) => src > v
 func Greater(src Series, v interface{}) Condition {
 	o := func(v1 float64, v2 float64) bool {
 		return v1 > v2
@@ -62,7 +62,7 @@ func Greater(src Series, v interface{}) Condition {
 	return Comp(o, src, v)
 }
 
-//Equal (src,v) => src == v
+// Equal (src,v) => src == v
 func Equal(src Series, v interface{}) Condition {
 	o := func(v1 float64, v2 float64) bool {
 		return v1 == v2
@@ -70,7 +70,7 @@ func Equal(src Series, v interface{}) Condition {
 	return Comp(o, src, v)
 }
 
-//NotEqual (src,v) => src != v
+// NotEqual (src,v) => src != v
 func NotEqual(src Series, v interface{}) Condition {
 	o := func(v1 float64, v2 float64) bool {
 		return v1 != v2
@@ -78,7 +78,7 @@ func NotEqual(src Series, v interface{}) Condition {
 	return Comp(o, src, v)
 }
 
-//SmallerEqual (src,v) => src <= v
+// SmallerEqual (src,v) => src <= v
 func SmallerEqual(src Series, v interface{}) Condition {
 	o := func(v1 float64, v2 float64) bool {
 		return v1 <= v2
@@ -86,7 +86,7 @@ func SmallerEqual(src Series, v interface{}) Condition {
 	return Comp(o, src, v)
 }
 
-//GreaterEqual (src,v) => src >= v
+// GreaterEqual (src,v) => src >= v
 func GreaterEqual(src Series, v interface{}) Condition {
 	o := func(v1 float64, v2 float64) bool {
 		return v1 >= v2
