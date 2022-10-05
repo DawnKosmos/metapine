@@ -3,7 +3,7 @@ package ta
 import (
 	"log"
 	"math"
-	"metapine/helper/formula"
+	"github.com/DawnKosmos/metapine/helper/formula"
 )
 
 type arit struct {
