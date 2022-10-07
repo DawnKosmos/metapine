@@ -13,23 +13,23 @@ CREATE TYPE exchanges as ENUM(
 
 CREATE TABLE IF NOT EXISTS index
 (
-    index_id BIGINT PRIMARY KEY,
-    name     varchar(64) unique
+    index_id BIGSERIAL PRIMARY KEY,
+    name     varchar(64) NOT NULL unique
 );
 
 
 CREATE TABLE IF NOT EXISTS ticker
 (
-    ticker_id SERIAL PRIMARY KEY,
+    ticker_id BIGSERIAL PRIMARY KEY,
     exchange  exchanges NOT NULL,
     ticker    varchar(64) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS ticker_index
 (
-    ticker_id     INT references ticker (ticker_id) ON DELETE CASCADE,
-    index_id      BIGINT references index (index_id) ON DELETE CASCADE,
-    weight        INT NOT NULL,
+    ticker_id     BIGINT references ticker (ticker_id) ON DELETE CASCADE NOT NULL,
+    index_id      BIGINT references index (index_id) ON DELETE CASCADE NOT NULL,
+    weight        int NOT NULL,
     excludevolume bool NOT NULL
 );
 
@@ -81,6 +81,16 @@ CREATE TABLE IF NOT EXISTS deribithigh
 
 ---- create above / drop below ----
 
+DROP TABLE IF EXISTS deribithigh;
+DROP TABLE IF EXISTS deribitlow;
+DROP TABLE IF EXISTS indexhigh;
+DROP TABLE IF EXISTS indexlow;
+DROP TABLE IF EXISTS binacelow;
+DROP TABLE IF EXISTS binancehigh;
+DROP TABLE IF EXISTS ftxhigh;
+DROP TABLE IF EXISTS ftxlow;
 DROP TABLE IF EXISTS ohclv;
 DROP TABLE IF EXISTS ticker_index;
-DROP TABLE IF EXISTS
+DROP TABLE IF EXISTS ticker;
+DROP TABLE IF EXISTS  index;
+DROP TYPE IF EXISTS exchanges;

@@ -19,7 +19,11 @@ FROM ticker_index
          JOIN index ON index.index_id = ticker_index.index_id
 WHERE index.index_id = $1;
 
--- name: DeleteTickerIndex :exec
+-- name: GetIndexIdByName :one
+SELECT index_id FROM index
+WHERE name = $1;
+
+-- name: DeleteIndex :exec
 DELETE
 FROM index
 WHERE index_id = $1;

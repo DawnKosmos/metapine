@@ -5,7 +5,6 @@
 package gen
 
 import (
-	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"time"
@@ -126,7 +125,7 @@ type Ftxlow struct {
 
 type Index struct {
 	IndexID int64
-	Name    sql.NullString
+	Name    string
 }
 
 type Indexhigh struct {
@@ -163,14 +162,14 @@ type Ohclv struct {
 }
 
 type Ticker struct {
-	TickerID int32
+	TickerID int64
 	Exchange Exchanges
 	Ticker   string
 }
 
 type TickerIndex struct {
-	TickerID      sql.NullInt32
-	IndexID       sql.NullInt64
+	TickerID      int64
+	IndexID       int64
 	Weight        int32
 	Excludevolume bool
 }

@@ -14,12 +14,11 @@ type Candle struct {
 	StartTime time.Time `json:"startTime"`
 }
 
-//New res must me greater than old
+// New res must me greater than old
 func ConvertChartResolution(oldResolution, newResolution int64, ch []Candle) ([]Candle, error) {
 	if newResolution == oldResolution {
 		return ch, nil
 	}
-
 	if oldResolution > newResolution || newResolution%oldResolution != 0 {
 		return ch, fmt.Errorf("New Res %v and old %v do not fit", newResolution, oldResolution)
 	}
@@ -47,7 +46,7 @@ func ConvertChartResolution(oldResolution, newResolution int64, ch []Candle) ([]
 	return newChart, nil
 }
 
-//ConvertResolution converts the a lower resolution into a higher resolution
+// ConvertResolution converts the a lower resolution into a higher resolution
 func ConvertCandleResolution(c []Candle) Candle {
 	var out Candle = Candle{c[0].Close, c[0].High, c[0].Low, c[0].Open, c[0].Volume, c[0].StartTime}
 	if len(c) == 1 {
@@ -64,4 +63,30 @@ func ConvertCandleResolution(c []Candle) Candle {
 		}
 	}
 	return out
+}
+
+/*
+GenerateResolutionFunc returns a function
+Usually exchanges only support specific resolutions. like 24h,4h,1h,30min
+If you want to have a different resolution this function together with ConvertChartResolution
+converts you the resolution you want.
+To get a function that converts the resolution for you exchange, add the
+supported resolution in desc order e.g. GenerateResolutionFunc(86400,14400,3600,900,300,60,15)
+*/
+func GenerateResolutionFunc(resInSeconds ...int64) func(int64) int64 {
+	return func(r int64) int64 {
+		var newRes int64
+		for _, v := range resInSeconds {
+			if r == v {
+				newRes = r
+				return newRes
+			}
+		}
+		for _, v := range resInSeconds {
+			if r >= v && r%v == 0 {
+				return v
+			}
+		}
+		return 3600
+	}
 }

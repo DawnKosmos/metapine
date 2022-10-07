@@ -7,7 +7,6 @@ package gen
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createIndex = `-- name: CreateIndex :one
@@ -16,8 +15,8 @@ VALUES ($1)
 RETURNING index_id
 `
 
-func (q *Queries) CreateIndex(ctx context.Context, name sql.NullString) (int64, error) {
-	row := q.db.QueryRowContext(ctx, createIndex, name)
+func (q *Queries) CreateIndex(ctx context.Context, name string) (int64, error) {
+	row := q.db.QueryRow(ctx, createIndex, name)
 	var index_id int64
 	err := row.Scan(&index_id)
 	return index_id, err
@@ -34,9 +33,9 @@ type CreateTickerParams struct {
 	Ticker   string
 }
 
-func (q *Queries) CreateTicker(ctx context.Context, arg CreateTickerParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, createTicker, arg.Exchange, arg.Ticker)
-	var ticker_id int32
+func (q *Queries) CreateTicker(ctx context.Context, arg CreateTickerParams) (int64, error) {
+	row := q.db.QueryRow(ctx, createTicker, arg.Exchange, arg.Ticker)
+	var ticker_id int64
 	err := row.Scan(&ticker_id)
 	return ticker_id, err
 }
@@ -47,14 +46,14 @@ VALUES ($1, $2, $3, $4)
 `
 
 type CreateTickerIndexParams struct {
-	TickerID      sql.NullInt32
-	IndexID       sql.NullInt64
+	TickerID      int64
+	IndexID       int64
 	Weight        int32
 	Excludevolume bool
 }
 
 func (q *Queries) CreateTickerIndex(ctx context.Context, arg CreateTickerIndexParams) error {
-	_, err := q.db.ExecContext(ctx, createTickerIndex,
+	_, err := q.db.Exec(ctx, createTickerIndex,
 		arg.TickerID,
 		arg.IndexID,
 		arg.Weight,
@@ -63,15 +62,27 @@ func (q *Queries) CreateTickerIndex(ctx context.Context, arg CreateTickerIndexPa
 	return err
 }
 
-const deleteTickerIndex = `-- name: DeleteTickerIndex :exec
+const deleteIndex = `-- name: DeleteIndex :exec
 DELETE
 FROM index
 WHERE index_id = $1
 `
 
-func (q *Queries) DeleteTickerIndex(ctx context.Context, indexID int64) error {
-	_, err := q.db.ExecContext(ctx, deleteTickerIndex, indexID)
+func (q *Queries) DeleteIndex(ctx context.Context, indexID int64) error {
+	_, err := q.db.Exec(ctx, deleteIndex, indexID)
 	return err
+}
+
+const getIndexIdByName = `-- name: GetIndexIdByName :one
+SELECT index_id FROM index
+WHERE name = $1
+`
+
+func (q *Queries) GetIndexIdByName(ctx context.Context, name string) (int64, error) {
+	row := q.db.QueryRow(ctx, getIndexIdByName, name)
+	var index_id int64
+	err := row.Scan(&index_id)
+	return index_id, err
 }
 
 const returnIndex = `-- name: ReturnIndex :many
@@ -90,7 +101,7 @@ type ReturnIndexRow struct {
 }
 
 func (q *Queries) ReturnIndex(ctx context.Context, indexID int64) ([]ReturnIndexRow, error) {
-	rows, err := q.db.QueryContext(ctx, returnIndex, indexID)
+	rows, err := q.db.Query(ctx, returnIndex, indexID)
 	if err != nil {
 		return nil, err
 	}
@@ -107,9 +118,6 @@ func (q *Queries) ReturnIndex(ctx context.Context, indexID int64) ([]ReturnIndex
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

@@ -5,4 +5,4 @@ packages:
     engine: "postgresql"
     schema: "./migration/" #schema werden in diesem Ordner gesucht
     queries: "./migration/queries/" # queries werden in diesem Ordner gesucht
-    sql_package: "pgx/v5" #go sql_package
+    sql_package: "pgx/v4" #go sql_package

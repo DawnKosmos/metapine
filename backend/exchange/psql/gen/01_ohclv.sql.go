@@ -36,7 +36,7 @@ type ReadOHCLRow struct {
 }
 
 func (q *Queries) ReadOHCL(ctx context.Context, arg ReadOHCLParams) ([]ReadOHCLRow, error) {
-	rows, err := q.db.QueryContext(ctx, readOHCL,
+	rows, err := q.db.Query(ctx, readOHCL,
 		arg.Starttime,
 		arg.IndexID,
 		arg.Resolution,
@@ -61,11 +61,19 @@ func (q *Queries) ReadOHCL(ctx context.Context, arg ReadOHCLParams) ([]ReadOHCLR
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return items, nil
+}
+
+type WriteOHCLVParams struct {
+	IndexID    int64
+	Resolution int32
+	Starttime  time.Time
+	Open       float32
+	High       float32
+	Close      float32
+	Low        float32
+	Volume     float32
 }

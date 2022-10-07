@@ -12,6 +12,10 @@ type FTX struct {
 	Client *http.Client
 }
 
+func (f *FTX) Name() string {
+	return "ftx"
+}
+
 const URL = "https://ftx.com/api/"
 
 func New() *FTX {

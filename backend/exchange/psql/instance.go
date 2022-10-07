@@ -1,37 +1,80 @@
 package psql
 
 import (
+	"errors"
+	"fmt"
 	"github.com/DawnKosmos/metapine/backend/exchange"
-	"log"
+	"github.com/DawnKosmos/metapine/backend/exchange/ftx"
+	"strings"
 	"time"
 )
 
-type Instance struct {
-	Exchange   string
-	Ticker     string
-	Resolution int64
-	ch         []exchange.Candle
+type Exchange struct {
+	exchange string
 }
 
-func New(exchange string) *Instance {
-	if p == nil {
-		log.Panicln("set a database...")
+func (e *Exchange) OHCLV(ticker string, resolution int64, start time.Time, end time.Time) ([]exchange.Candle, error) {
+	index, err := p.qq.GetIndexIdByName(ctx, fmt.Sprintf("%s:%s", e.exchange, strings.ToLower(ticker)))
+	if err != nil || index == 0 {
+		if "index" == e.exchange {
+			return nil, errors.New("Index does not exist:" + ticker)
+		}
+
+		var ee exchange.CandleProvider
+		switch e.exchange {
+		case "ftx":
+			ee = ftx.New()
+		case "binance":
+		case "bybit":
+		default:
+			return nil, errors.New("exchange not supported")
+		}
+		ee.OHCLV(ticker, resolution, start, end)
+
 	}
-	return &Instance{Exchange: exchange}
+
+	/*
+		if err != nil || index == 0{
+			if "index" == e.exchange{
+				return err
+			}
+			get exchange ...
+			//checke ob ticker existiert, exchange.OHCLV(ticker, resolution, st,end)
+			CreateTicker, CreateIndex,
+		}
+	*/
 }
 
-func (in *Instance) Val(index int) exchange.Candle {
-	//TODO implement me
-	panic("implement me")
+func getOHCLV(name string, ticker string, resolution int64, start time.Time, end time.Time) ([]exchange.Candle, error) {
+	var ee exchange.CandleProvider
+	switch name {
+	case "ftx":
+		ee = ftx.New()
+	case "binance":
+	case "bybit":
+	default:
+		return nil, errors.New("exchange not supported")
+	}
+	return ee.OHCLV(ticker, resolution, start, end)
 }
 
-func (in *Instance) OHCLV(exchange string, ticker string, resolution int64, start time.Time, end time.Time) ([]exchange.Candle, error) {
-	//check if index, if no add the exchange
-	//Check if DatabaseEntry exists
-	//Download if needed
+func (e *Exchange) Name() string {
+	return e.exchange
 }
 
-func (in *Instance) Name() string {
-	//TODO implement me
-	panic("implement me")
+type Index struct {
+	Resolution int64
+	Tickers    []Ticker
+}
+
+func New(name string) (*Exchange, error) {
+	name = strings.ToLower(name)
+	switch name {
+	case "ftx", "deribit", "index":
+		return &Exchange{exchange: name}, nil
+	case "bybit", "bitmex", "coinbase", "phemex":
+		return nil, errors.New("Exchange not implemented")
+	default:
+		return nil, errors.New("exchange does not exist")
+	}
 }
