@@ -52,19 +52,13 @@ func (d *DB) ohclv(ctx context.Context, args ohclvQueueParams) ([]exchange.Candl
 	return items, nil
 }
 
-func getDbName(exchange string, resolution int64) string {
-	resName := "high"
-	if resolution < 3600 {
-		resName = "low"
-	}
-	return exchange + resName
-}
-
-func (d *DB) WriteOHCLV(ctx context.Context, tableName string, indexId int64, res int64, args []exchange.Candle) (int64, error) {
+func (d *DB) WriteOHCLV(ctx context.Context, exchangeName string, indexId int64, res int64, args []exchange.Candle) (int64, error) {
+	tableName := getDbName(exchangeName, res)
 	if len(args) > 10 {
 		return d.copyFromOHCLV(ctx, tableName, indexId, res, args)
+	} else {
+		return d.writeOHCLV(ctx, tableName, indexId, res, args)
 	}
-
 }
 
 // CopyFrom
@@ -75,12 +69,6 @@ func (d *DB) copyFromOHCLV(ctx context.Context, tableName string, indexId int64,
 		res:                  res,
 		skippedFirstNextCall: false,
 	})
-}
-
-func checkResolution(res int64) int64 {
-	fn := exchange.GenerateResolutionFunc(86400*7, 86400, 14400,
-		3600, 900, 60, 15)
-	return fn(res)
 }
 
 // CopyFrom

@@ -13,7 +13,7 @@ INSERT INTO ticker_index (ticker_id, index_id, weight, excludevolume)
 VALUES ($1, $2, $3, $4);
 
 -- name: ReturnIndex :many
-SELECT ticker.exchange, ticker.ticker, ticker_index.weight, ticker_index.excludevolume
+SELECT index.name, ticker.exchange, ticker.ticker, ticker_index.weight, ticker_index.excludevolume
 FROM ticker_index
          JOIN ticker ON ticker.ticker_id = ticker_index.ticker_id
          JOIN index ON index.index_id = ticker_index.index_id
@@ -27,3 +27,12 @@ WHERE name = $1;
 DELETE
 FROM index
 WHERE index_id = $1;
+
+
+-- name: ReturnIndexList :many
+SELECT index.index_id, index.name, count(index_id) composite_of
+FROM index
+         JOIN ticker_index ON index.index_id = ticker_index.index_id
+GROUP BY index.index_id
+HAVING COUNT(index.index_id) >= 2
+ORDER BY index.name;

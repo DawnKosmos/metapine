@@ -35,6 +35,18 @@ func MinInt(f ...int) (val int, position int) {
 	return
 }
 
+func Min[T calc](f ...T) (T, int) {
+	val := f[0]
+	var pos int
+	for i, v := range f[1:] {
+		if v > val {
+			pos = i
+			val = v
+		}
+	}
+	return val, pos
+}
+
 func MaxInt(f ...int) (val int, position int) {
 	val = f[0]
 	for i, v := range f {

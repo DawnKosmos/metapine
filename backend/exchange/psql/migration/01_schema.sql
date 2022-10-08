@@ -1,6 +1,6 @@
 -- Speichern 1 min, 5 min, 15 min, 1h, 3h , 4h, 6h
 
-CREATE TYPE exchanges as ENUM(
+CREATE TYPE exchanges as ENUM (
     'ftx',
     'binance',
     'bybit',
@@ -8,34 +8,46 @@ CREATE TYPE exchanges as ENUM(
     'bitmex',
     'coinbase',
     'phemex'
-);
+    );
 
 
 CREATE TABLE IF NOT EXISTS index
 (
-    index_id BIGSERIAL PRIMARY KEY,
+    index_id SERIAL PRIMARY KEY,
     name     varchar(64) NOT NULL unique
 );
 
+/*
+series soll indikatoren sowie andere daten speichern die nichts mit den OHCLV kerzen zu tun haben
+
+CREATE TABLE IF NOT EXISTS series
+(
+name      varchar(64) unique not null,
+series_id BIGSERIAL primary key,
+value     float8             not null,
+starttime bigint
+);
+
+ */
 
 CREATE TABLE IF NOT EXISTS ticker
 (
-    ticker_id BIGSERIAL PRIMARY KEY,
-    exchange  exchanges NOT NULL,
+    ticker_id SERIAL PRIMARY KEY,
+    exchange  exchanges   NOT NULL,
     ticker    varchar(64) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS ticker_index
 (
-    ticker_id     BIGINT references ticker (ticker_id) ON DELETE CASCADE NOT NULL,
-    index_id      BIGINT references index (index_id) ON DELETE CASCADE NOT NULL,
-    weight        int NOT NULL,
-    excludevolume bool NOT NULL
+    ticker_id     int references ticker (ticker_id) ON DELETE CASCADE NOT NULL,
+    index_id      int references index (index_id) ON DELETE CASCADE   NOT NULL,
+    weight        int                                                 NOT NULL,
+    excludevolume bool                                                NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS ohclv
 (
-    index_id   BIGINT    NOT NULL,
+    index_id   int       NOT NULL,
     resolution int       NOT NULL,
     starttime  timestamp NOT NULL,
     open       float4    not null,
@@ -79,8 +91,30 @@ CREATE TABLE IF NOT EXISTS deribithigh
 ) INHERITS (ohclv);
 
 
+
+CREATE TABLE IF NOT EXISTS minute_manager
+(
+    index_id  int REFERENCES index (index_id) unique,
+    tableName varchar(64) NOT NULL,
+    dataArr   json    not null
+);
+
+
+
+CREATE TABLE IF NOT EXISTS minute_chart
+(
+    starttime timestamp unique not null,
+    open      float4 not null,
+    high      float4 not null,
+    close     float4 not null,
+    low       float4 not null,
+    volume    float4 not null
+);
+
 ---- create above / drop below ----
 
+DROP TABLE IF EXISTS minute_manager;
+DROP TYPE IF EXISTS dates;
 DROP TABLE IF EXISTS deribithigh;
 DROP TABLE IF EXISTS deribitlow;
 DROP TABLE IF EXISTS indexhigh;
@@ -92,5 +126,5 @@ DROP TABLE IF EXISTS ftxlow;
 DROP TABLE IF EXISTS ohclv;
 DROP TABLE IF EXISTS ticker_index;
 DROP TABLE IF EXISTS ticker;
-DROP TABLE IF EXISTS  index;
+DROP TABLE IF EXISTS index;
 DROP TYPE IF EXISTS exchanges;

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/DawnKosmos/metapine/backend/exchange"
-	"github.com/DawnKosmos/metapine/backend/exchange/ftx"
 	"strings"
 	"time"
 )
@@ -14,66 +13,43 @@ type Exchange struct {
 }
 
 func (e *Exchange) OHCLV(ticker string, resolution int64, start time.Time, end time.Time) ([]exchange.Candle, error) {
-	index, err := p.qq.GetIndexIdByName(ctx, fmt.Sprintf("%s:%s", e.exchange, strings.ToLower(ticker)))
-	if err != nil || index == 0 {
-		if "index" == e.exchange {
+	ticker = strings.ToLower(ticker)
+	indexId, err := p.qq.GetIndexIdByName(ctx, fmt.Sprintf("%s:%s", e.exchange, ticker))
+	if e.exchange == "index"{
+		if err != nil{
 			return nil, errors.New("Index does not exist:" + ticker)
 		}
 
-		var ee exchange.CandleProvider
-		switch e.exchange {
-		case "ftx":
-			ee = ftx.New()
-		case "binance":
-		case "bybit":
-		default:
-			return nil, errors.New("exchange not supported")
-		}
-		ee.OHCLV(ticker, resolution, start, end)
-
 	}
 
-	/*
-		if err != nil || index == 0{
-			if "index" == e.exchange{
-				return err
-			}
-			get exchange ...
-			//checke ob ticker existiert, exchange.OHCLV(ticker, resolution, st,end)
-			CreateTicker, CreateIndex,
-		}
-	*/
-}
 
-func getOHCLV(name string, ticker string, resolution int64, start time.Time, end time.Time) ([]exchange.Candle, error) {
-	var ee exchange.CandleProvider
-	switch name {
-	case "ftx":
-		ee = ftx.New()
-	case "binance":
-	case "bybit":
-	default:
-		return nil, errors.New("exchange not supported")
+
+	if err != nil || indexId == 0 {
+		if "index" == e.exchange {
+			return nil, errors.New("Index does not exist:" + ticker)
+		}
+		//initOhclv downloads the ticker(if exists) and saves it in the provided database
+		return initOhclv(e.exchange, ticker, resolution, start, end) //Creates Ticker, Index, and Downloads OHCLV
 	}
-	return ee.OHCLV(ticker, resolution, start, end)
+	rows, err := p.qq.ReturnIndex(ctx,indexId)
+	for _, v := range rows{
+		v.
+	}
+
 }
 
 func (e *Exchange) Name() string {
 	return e.exchange
 }
 
-type Index struct {
-	Resolution int64
-	Tickers    []Ticker
-}
-
-func New(name string) (*Exchange, error) {
+// Creates a New CandleProvider. Data gets Saved in an SQL DB
+func New(name string) (exchange.CandleProvider, error) {
 	name = strings.ToLower(name)
 	switch name {
-	case "ftx", "deribit", "index":
+	case "ftx", "deribit", "bybit", "index":
 		return &Exchange{exchange: name}, nil
-	case "bybit", "bitmex", "coinbase", "phemex":
-		return nil, errors.New("Exchange not implemented")
+	case "bitmex", "coinbase", "phemex":
+		return nil, errors.New("Exchange not yet implemented")
 	default:
 		return nil, errors.New("exchange does not exist")
 	}

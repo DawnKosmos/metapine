@@ -19,9 +19,9 @@ type GetTickerIdParams struct {
 	Ticker   string
 }
 
-func (q *Queries) GetTickerId(ctx context.Context, arg GetTickerIdParams) (int64, error) {
+func (q *Queries) GetTickerId(ctx context.Context, arg GetTickerIdParams) (int32, error) {
 	row := q.db.QueryRow(ctx, getTickerId, arg.Exchange, arg.Ticker)
-	var ticker_id int64
+	var ticker_id int32
 	err := row.Scan(&ticker_id)
 	return ticker_id, err
 }

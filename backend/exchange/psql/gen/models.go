@@ -5,9 +5,12 @@
 package gen
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgtype"
 )
 
 type Exchanges string
@@ -58,7 +61,7 @@ func (ns NullExchanges) Value() (driver.Value, error) {
 }
 
 type Binacelow struct {
-	IndexID    int64
+	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
 	Open       float32
@@ -69,7 +72,7 @@ type Binacelow struct {
 }
 
 type Binancehigh struct {
-	IndexID    int64
+	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
 	Open       float32
@@ -80,7 +83,7 @@ type Binancehigh struct {
 }
 
 type Deribithigh struct {
-	IndexID    int64
+	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
 	Open       float32
@@ -91,7 +94,7 @@ type Deribithigh struct {
 }
 
 type Deribitlow struct {
-	IndexID    int64
+	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
 	Open       float32
@@ -102,7 +105,7 @@ type Deribitlow struct {
 }
 
 type Ftxhigh struct {
-	IndexID    int64
+	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
 	Open       float32
@@ -113,7 +116,7 @@ type Ftxhigh struct {
 }
 
 type Ftxlow struct {
-	IndexID    int64
+	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
 	Open       float32
@@ -124,12 +127,12 @@ type Ftxlow struct {
 }
 
 type Index struct {
-	IndexID int64
+	IndexID int32
 	Name    string
 }
 
 type Indexhigh struct {
-	IndexID    int64
+	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
 	Open       float32
@@ -140,7 +143,7 @@ type Indexhigh struct {
 }
 
 type Indexlow struct {
-	IndexID    int64
+	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
 	Open       float32
@@ -150,8 +153,23 @@ type Indexlow struct {
 	Volume     float32
 }
 
+type MinuteChart struct {
+	Starttime time.Time
+	Open      float32
+	High      float32
+	Close     float32
+	Low       float32
+	Volume    float32
+}
+
+type MinuteManager struct {
+	IndexID   sql.NullInt32
+	Tablename string
+	Dataarr   pgtype.JSON
+}
+
 type Ohclv struct {
-	IndexID    int64
+	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
 	Open       float32
@@ -162,14 +180,14 @@ type Ohclv struct {
 }
 
 type Ticker struct {
-	TickerID int64
+	TickerID int32
 	Exchange Exchanges
 	Ticker   string
 }
 
 type TickerIndex struct {
-	TickerID      int64
-	IndexID       int64
+	TickerID      int32
+	IndexID       int32
 	Weight        int32
 	Excludevolume bool
 }

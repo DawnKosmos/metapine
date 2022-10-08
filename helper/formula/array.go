@@ -55,7 +55,7 @@ func Highest[T calc](f ...T) (T, int) {
 	return low, position
 }
 
-//ShortestLenOfArray Return the lenght of the shortest array
+// ShortestLenOfArray Return the lenght of the shortest array
 func ShortestLenOfArray[T any](f ...[]T) (int, int) {
 	var l int = len(f[0])
 	var position int = 0

@@ -5,12 +5,23 @@ import (
 	"strings"
 )
 
+type Index struct {
+	name    string
+	Tickers []Ticker
+}
+
+// Register a new Index
 func NewIndex(name string, t ...Ticker) error {
+	/*
+		CreateIndex
+		GetTicker
+			Optional: RegisterNewTicker
+		CreateTickerIndex
+	*/
 	id, err := p.qq.CreateIndex(ctx, name)
 	if err != nil {
 		return err
 	}
-
 	for _, v := range t {
 		tickerId, err := p.qq.GetTickerId(ctx, gen.GetTickerIdParams{
 			Exchange: v.Exchange,
@@ -27,7 +38,6 @@ func NewIndex(name string, t ...Ticker) error {
 				return err
 			}
 		}
-
 		if err = p.qq.CreateTickerIndex(ctx, gen.CreateTickerIndexParams{
 			TickerID:      tickerId,
 			IndexID:       id,

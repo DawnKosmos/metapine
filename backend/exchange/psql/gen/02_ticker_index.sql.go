@@ -15,9 +15,9 @@ VALUES ($1)
 RETURNING index_id
 `
 
-func (q *Queries) CreateIndex(ctx context.Context, name string) (int64, error) {
+func (q *Queries) CreateIndex(ctx context.Context, name string) (int32, error) {
 	row := q.db.QueryRow(ctx, createIndex, name)
-	var index_id int64
+	var index_id int32
 	err := row.Scan(&index_id)
 	return index_id, err
 }
@@ -33,9 +33,9 @@ type CreateTickerParams struct {
 	Ticker   string
 }
 
-func (q *Queries) CreateTicker(ctx context.Context, arg CreateTickerParams) (int64, error) {
+func (q *Queries) CreateTicker(ctx context.Context, arg CreateTickerParams) (int32, error) {
 	row := q.db.QueryRow(ctx, createTicker, arg.Exchange, arg.Ticker)
-	var ticker_id int64
+	var ticker_id int32
 	err := row.Scan(&ticker_id)
 	return ticker_id, err
 }
@@ -46,8 +46,8 @@ VALUES ($1, $2, $3, $4)
 `
 
 type CreateTickerIndexParams struct {
-	TickerID      int64
-	IndexID       int64
+	TickerID      int32
+	IndexID       int32
 	Weight        int32
 	Excludevolume bool
 }
@@ -68,7 +68,7 @@ FROM index
 WHERE index_id = $1
 `
 
-func (q *Queries) DeleteIndex(ctx context.Context, indexID int64) error {
+func (q *Queries) DeleteIndex(ctx context.Context, indexID int32) error {
 	_, err := q.db.Exec(ctx, deleteIndex, indexID)
 	return err
 }
@@ -78,15 +78,15 @@ SELECT index_id FROM index
 WHERE name = $1
 `
 
-func (q *Queries) GetIndexIdByName(ctx context.Context, name string) (int64, error) {
+func (q *Queries) GetIndexIdByName(ctx context.Context, name string) (int32, error) {
 	row := q.db.QueryRow(ctx, getIndexIdByName, name)
-	var index_id int64
+	var index_id int32
 	err := row.Scan(&index_id)
 	return index_id, err
 }
 
 const returnIndex = `-- name: ReturnIndex :many
-SELECT ticker.exchange, ticker.ticker, ticker_index.weight, ticker_index.excludevolume
+SELECT index.name, ticker.exchange, ticker.ticker, ticker_index.weight, ticker_index.excludevolume
 FROM ticker_index
          JOIN ticker ON ticker.ticker_id = ticker_index.ticker_id
          JOIN index ON index.index_id = ticker_index.index_id
@@ -94,13 +94,14 @@ WHERE index.index_id = $1
 `
 
 type ReturnIndexRow struct {
+	Name          string
 	Exchange      Exchanges
 	Ticker        string
 	Weight        int32
 	Excludevolume bool
 }
 
-func (q *Queries) ReturnIndex(ctx context.Context, indexID int64) ([]ReturnIndexRow, error) {
+func (q *Queries) ReturnIndex(ctx context.Context, indexID int32) ([]ReturnIndexRow, error) {
 	rows, err := q.db.Query(ctx, returnIndex, indexID)
 	if err != nil {
 		return nil, err
@@ -110,11 +111,47 @@ func (q *Queries) ReturnIndex(ctx context.Context, indexID int64) ([]ReturnIndex
 	for rows.Next() {
 		var i ReturnIndexRow
 		if err := rows.Scan(
+			&i.Name,
 			&i.Exchange,
 			&i.Ticker,
 			&i.Weight,
 			&i.Excludevolume,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const returnIndexList = `-- name: ReturnIndexList :many
+SELECT index.index_id, index.name, count(index_id) composite_of
+FROM index
+         JOIN ticker_index ON index.index_id = ticker_index.index_id
+GROUP BY index.index_id
+HAVING COUNT(index.index_id) >= 2
+ORDER BY index.name
+`
+
+type ReturnIndexListRow struct {
+	IndexID     int32
+	Name        string
+	CompositeOf int64
+}
+
+func (q *Queries) ReturnIndexList(ctx context.Context) ([]ReturnIndexListRow, error) {
+	rows, err := q.db.Query(ctx, returnIndexList)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ReturnIndexListRow
+	for rows.Next() {
+		var i ReturnIndexListRow
+		if err := rows.Scan(&i.IndexID, &i.Name, &i.CompositeOf); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

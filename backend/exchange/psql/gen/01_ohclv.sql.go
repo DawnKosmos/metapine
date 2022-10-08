@@ -21,7 +21,7 @@ WHERE index_id = $2
 
 type ReadOHCLParams struct {
 	Starttime   time.Time
-	IndexID     int64
+	IndexID     int32
 	Resolution  int32
 	Starttime_2 time.Time
 }
@@ -68,7 +68,7 @@ func (q *Queries) ReadOHCL(ctx context.Context, arg ReadOHCLParams) ([]ReadOHCLR
 }
 
 type WriteOHCLVParams struct {
-	IndexID    int64
+	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
 	Open       float32
