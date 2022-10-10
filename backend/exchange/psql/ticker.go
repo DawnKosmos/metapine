@@ -15,7 +15,7 @@ type Ticker struct {
 	ExcludeVolume bool
 }
 
-func registerNewTicker(name gen.Exchanges, ticker string) (int64, error) {
+func registerNewTicker(name gen.Exchanges, ticker string) (int32, error) {
 	var ee exchange.CandleProvider
 	switch name {
 	case gen.ExchangesFtx:

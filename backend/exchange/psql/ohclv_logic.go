@@ -70,7 +70,7 @@ func ohclvTicker(indexId int64, exname string, ticker string, resolution int64, 
 	if len(mc) != 0 {
 
 	}
-
+	return nil, err
 }
 
 // Gets Called when the Ticker does not exist and needs to be initialized
@@ -106,7 +106,7 @@ func initOhclv(name string, ticker string, resolution int64, start time.Time, en
 		return nil, err
 	}
 
-	indexId, err := p.qq.CreateIndex(ctx, fmt.Sprintf("%s:%s", name, ticker))
+	indexId, err := p.qq.CreateIndex(ctx, indexName(name, ticker))
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func initOhclv(name string, ticker string, resolution int64, start time.Time, en
 		return nil, err
 	}
 
-	n, err := p.WriteOHCLV(ctx, name, indexId, resolution, ch)
+	n, err := p.WriteOHCLV(ctx, name, int64(indexId), resolution, ch)
 	if err != nil {
 		return nil, err
 	}

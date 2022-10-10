@@ -18,7 +18,7 @@ func NewIndex(name string, t ...Ticker) error {
 			Optional: RegisterNewTicker
 		CreateTickerIndex
 	*/
-	id, err := p.qq.CreateIndex(ctx, name)
+	id, err := p.qq.CreateIndex(ctx, "index_"+name)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package psql
 
 import (
 	"errors"
+	"fmt"
 	"github.com/DawnKosmos/metapine/backend/exchange"
 	"github.com/DawnKosmos/metapine/backend/exchange/ftx"
 	"github.com/DawnKosmos/metapine/backend/exchange/psql/gen"
@@ -16,7 +17,7 @@ func checkResolution(res int64) int64 {
 
 func getDbName(exchange string, resolution int64) string {
 	resName := "high"
-	if resolution < 3600 {
+	if resolution <= 3600 {
 		resName = "low"
 	}
 	return exchange + resName
@@ -55,21 +56,6 @@ type tupel struct {
 	et time.Time
 }
 
-func missingCandles(ch []exchange.Candle, res int64) []tupel {
-	var t []tupel
-	realLen := int64(len(ch))
-	expectedLen := ch[realLen-1].StartTime.Unix() - ch[0].StartTime.Unix()/res
-	if expectedLen > realLen {
-		for i := 1; i < len(ch); i++ {
-			if ch[i].StartTime.Unix()-ch[i-1].StartTime.Unix() != res {
-				t = append(t, tupel{ch[i-1].StartTime, ch[i].StartTime})
-			}
-		}
-	}
-	return t
+func indexName(exchange string, ticker string) string {
+	return fmt.Sprintf("%s:%s", exchange, ticker)
 }
-
-func fixMissingCandles(ch []exchange.Candle, res int64, ee exchange.CandleProvider)
-
-1440*365
-1500*300 = 480000*4 = 2 millionen

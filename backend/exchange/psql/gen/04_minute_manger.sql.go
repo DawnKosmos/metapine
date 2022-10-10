@@ -8,8 +8,6 @@ package gen
 import (
 	"context"
 	"database/sql"
-
-	"github.com/jackc/pgtype"
 )
 
 const createMinuteManager = `-- name: CreateMinuteManager :exec
@@ -19,9 +17,9 @@ VALUES ($1,$2,$3)
 `
 
 type CreateMinuteManagerParams struct {
-	IndexID   sql.NullInt32
+	IndexID   int32
 	Tablename string
-	Dataarr   pgtype.JSON
+	Dataarr   sql.NullString
 }
 
 func (q *Queries) CreateMinuteManager(ctx context.Context, arg CreateMinuteManagerParams) error {
@@ -36,10 +34,10 @@ WHERE index_id = $1
 
 type ReadMinuteManagerRow struct {
 	Tablename string
-	Dataarr   pgtype.JSON
+	Dataarr   sql.NullString
 }
 
-func (q *Queries) ReadMinuteManager(ctx context.Context, indexID sql.NullInt32) (ReadMinuteManagerRow, error) {
+func (q *Queries) ReadMinuteManager(ctx context.Context, indexID int32) (ReadMinuteManagerRow, error) {
 	row := q.db.QueryRow(ctx, readMinuteManager, indexID)
 	var i ReadMinuteManagerRow
 	err := row.Scan(&i.Tablename, &i.Dataarr)
@@ -52,8 +50,8 @@ SET dataArr = $1 WHERE index_id = $2
 `
 
 type UpdateMinuteManagerParams struct {
-	Dataarr pgtype.JSON
-	IndexID sql.NullInt32
+	Dataarr sql.NullString
+	IndexID int32
 }
 
 func (q *Queries) UpdateMinuteManager(ctx context.Context, arg UpdateMinuteManagerParams) error {

@@ -9,8 +9,6 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"time"
-
-	"github.com/jackc/pgtype"
 )
 
 type Exchanges string
@@ -163,9 +161,9 @@ type MinuteChart struct {
 }
 
 type MinuteManager struct {
-	IndexID   sql.NullInt32
+	IndexID   int32
 	Tablename string
-	Dataarr   pgtype.JSON
+	Dataarr   sql.NullString
 }
 
 type Ohclv struct {

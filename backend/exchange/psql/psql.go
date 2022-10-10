@@ -56,7 +56,7 @@ func ReturnIndexList() ([]string, error) {
 	return ss, nil
 }
 
-func ReturnIndex(id int64) (out Index, err error) {
+func ReturnIndex(id int32) (out Index, err error) {
 	row, err := p.qq.ReturnIndex(ctx, id)
 	if err != nil {
 		return

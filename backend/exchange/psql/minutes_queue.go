@@ -1,9 +1,11 @@
 package psql
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
+	"github.com/DawnKosmos/metapine/backend/exchange"
 	"github.com/DawnKosmos/metapine/backend/exchange/psql/gen"
-	"github.com/jackc/pgtype"
 	"time"
 )
 
@@ -16,53 +18,101 @@ the current month get treaten differently
 
 */
 
-type Month struct {
-	M        int  `json:"m,omitempty"`
-	Done     bool `json:"done,omitempty"`
-	Complete bool `json:"complete,omitempty"`
-}
+const createNewTableQueue = `CREATE TABLE IF NOT EXISTS %s
+(
+)INHERITS(minute_chart)
+`
 
-type Year struct {
-	Y      int     `json:"y,omitempty"`
-	Months []Month `json:"months,omitempty"`
-}
-
-func NewYear(y int) Year {
-	a := Year{Y: y}
-	for i := 1; i < 13; i++ {
-		a.Months = append(a.Months, Month{i, false, false})
+func createNewMinutesTable(indexId int32) error {
+	s := minutesTable(indexId)
+	fmt.Println(s)
+	qq := fmt.Sprintf(createNewTableQueue, s)
+	_, err := p.q.Exec(ctx, qq)
+	if err != nil {
+		return err
 	}
-	return a
-}
-
-type DataArr struct {
-	Years []Year `json:"years,omitempty"`
-}
-
-func (a *DataArr) AddYear(Y int) (arrPosition int) {
-	for i, v := range a.Years {
-		if v.Y == Y {
-			return i
-		}
-		if Y < v.Y {
-			a.Years = append(append(a.Years[:i], NewYear(Y)), a.Years[i:]...)
-			return i
-		}
-	}
-	a.Years = append(a.Years, NewYear(Y))
-	return len(a.Years) - 1
-}
-
-func kek() {
-
-	var d DataArr
-	b := pgtype.JSON{}
-	b.Set(d)
-
-	k := p.qq.CreateMinuteManager(ctx, gen.CreateMinuteManagerParams{
-		IndexID:   sql.NullInt32{},
-		Tablename: "",
-		Dataarr:   b,
+	err = p.qq.CreateMinuteManager(ctx, gen.CreateMinuteManagerParams{
+		IndexID:   indexId,
+		Tablename: minutesTable(indexId),
+		Dataarr: sql.NullString{
+			Valid: false,
+		},
 	})
-	time.Date(2021, time.January, 0, 0, 0, 0, 0, time.UTC)
+	return err
+}
+
+const minutesOhclvqueue = `-- name: GetOHCLV :many
+SELECT starttime, open, high, close, low, volume
+FROM %s
+WHERE index_id = $1
+  AND starttime > $3
+  AND starttime < $4
+`
+
+func (d *DB) minutesOhclv(ctx context.Context, tableName string, IndexId int32, st time.Time, et time.Time) ([]exchange.Candle, error) {
+	qq := fmt.Sprintf(minutesOhclvqueue, tableName)
+	rows, err := d.q.Query(ctx, qq, IndexId, st, et)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []exchange.Candle
+	for rows.Next() {
+		var i exchange.Candle
+		if err := rows.Scan(
+			&i.StartTime,
+			&i.Open,
+			&i.High,
+			&i.Close,
+			&i.Low,
+			&i.Volume,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (d *DB) MinutesWriteOHCLV(ctx context.Context, tableName string, args []exchange.Candle) (int64, error) {
+	return d.q.CopyFrom(ctx, []string{tableName}, []string{"starttime", "open", "high", "close", "low", "volume"}, &iteratorMinutesOHCLV{
+		rows:                 args,
+		skippedFirstNextCall: false,
+	})
+}
+
+// CopyFrom
+type iteratorMinutesOHCLV struct {
+	rows                 []exchange.Candle
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorMinutesOHCLV) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorMinutesOHCLV) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].StartTime,
+		r.rows[0].Open,
+		r.rows[0].High,
+		r.rows[0].Close,
+		r.rows[0].Low,
+		r.rows[0].Volume,
+	}, nil
+}
+
+func (r iteratorMinutesOHCLV) Err() error {
+	return nil
 }

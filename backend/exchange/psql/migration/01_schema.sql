@@ -94,11 +94,10 @@ CREATE TABLE IF NOT EXISTS deribithigh
 
 CREATE TABLE IF NOT EXISTS minute_manager
 (
-    index_id  int REFERENCES index (index_id) unique,
+    index_id  int REFERENCES index (index_id) NOT NULL unique,
     tableName varchar(64) NOT NULL,
-    dataArr   json    not null
+    dataArr   text
 );
-
 
 
 CREATE TABLE IF NOT EXISTS minute_chart
