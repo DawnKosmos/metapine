@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/DawnKosmos/metapine/backend/exchange/psql/gen"
+	"github.com/jackc/pgx/v4"
 	"log"
 
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -11,6 +12,8 @@ import (
 
 var p *DB
 var ctx = context.Background()
+
+var ErrNoRows = pgx.ErrNoRows
 
 type CustomLogger struct {
 }

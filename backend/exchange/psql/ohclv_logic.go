@@ -66,10 +66,7 @@ func ohclvTicker(indexId int64, exname string, ticker string, resolution int64, 
 			}
 		}
 	}
-	mc := missingCandles(ch, resolution)
-	if len(mc) != 0 {
 
-	}
 	return nil, err
 }
 

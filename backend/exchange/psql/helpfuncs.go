@@ -6,6 +6,7 @@ import (
 	"github.com/DawnKosmos/metapine/backend/exchange"
 	"github.com/DawnKosmos/metapine/backend/exchange/ftx"
 	"github.com/DawnKosmos/metapine/backend/exchange/psql/gen"
+	"strconv"
 	"time"
 )
 
@@ -58,4 +59,8 @@ type tupel struct {
 
 func indexName(exchange string, ticker string) string {
 	return fmt.Sprintf("%s:%s", exchange, ticker)
+}
+
+func minutesTable(id int32) string {
+	return "minutes_" + strconv.Itoa(int(id))
 }

@@ -10,7 +10,7 @@ func TestDB(t *testing.T) {
 	err := p.Ping()
 	fmt.Println(err)
 
-	fmt.Println(getDbName("ftx", 1800))
-	fmt.Println(getDbName("ftx", 7200))
+	_, err = p.qq.ReadMinuteManager(ctx, 10)
 
+	fmt.Println(ErrNoRows == err, err)
 }
