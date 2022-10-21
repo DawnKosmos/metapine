@@ -18,9 +18,16 @@ the current month get treaten differently
 
 */
 
-const createNewTableQueue = `CREATE TABLE IF NOT EXISTS %s
+const createNewTableQueue = `
+CREATE TABLE IF NOT EXISTS %s
 (
-)INHERITS(minute_chart)
+    starttime timestamp unique not null,
+    open      float4           not null,
+    high      float4           not null,
+    close     float4           not null,
+    low       float4           not null,
+    volume    float4           not null
+);
 `
 
 func createNewMinutesTable(indexId int32) error {
@@ -115,4 +122,19 @@ func (r iteratorMinutesOHCLV) Values() ([]interface{}, error) {
 
 func (r iteratorMinutesOHCLV) Err() error {
 	return nil
+}
+
+// ==== Last Candle
+const minuteLastCandle = `-- name: GetOHCLV :one
+SELECT starttime
+FROM %s
+ORDER BY starttime DESC LIMIT 1
+`
+
+func (d *DB) lastCandle(tb string) (st int64, err error) {
+	qq := fmt.Sprintf(minuteLastCandle, tb)
+
+	res := d.q.QueryRow(ctx, qq)
+	err = res.Scan(&st)
+	return st, err
 }

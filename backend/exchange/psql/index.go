@@ -10,6 +10,13 @@ type Index struct {
 	Tickers []Ticker
 }
 
+type Ticker struct {
+	Exchange      gen.Exchanges
+	Ticker        string
+	Weight        int32
+	ExcludeVolume bool
+}
+
 // Register a new Index
 func NewIndex(name string, t ...Ticker) error {
 	/*

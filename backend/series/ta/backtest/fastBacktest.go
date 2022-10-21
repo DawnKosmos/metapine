@@ -2,6 +2,7 @@ package backtest
 
 import (
 	"fmt"
+	"io"
 	"math"
 	"time"
 
@@ -12,13 +13,7 @@ import (
 
 //fastBacktest should be used it you are permutation massive amounts of indicators
 
-type Mode int
-
-const (
-	OnlySHORT Mode = -1
-	ALL            = 0
-	OnlyLONG       = 1
-)
+//Fast Backtest
 
 type FastBacktest struct {
 	ch         ta.Chart
@@ -31,15 +26,6 @@ type FastBacktest struct {
 	P          []string
 	results    []FastBacktestResult
 	less       func(f *FastBacktestResult) float64
-}
-
-type FastBacktestResult struct {
-	parameters  []interface{}
-	winrate     float64
-	pnl         float64
-	avgWin      float64
-	totalTrades int
-	less        func(f *FastBacktestResult) float64
 }
 
 func InitFastBackTest(ch ta.Chart, mode Mode, pyramiding int, fee float64, st int64, et int64, parameter []string) *FastBacktest { //st, et -1 means trading whole data
@@ -71,10 +57,6 @@ func InitFastBackTest(ch ta.Chart, mode Mode, pyramiding int, fee float64, st in
 		cutEt:      cutEt,
 		less:       SortPNL,
 	}
-}
-
-func (f *FastBacktest) SortingAlgo(less func(s *FastBacktestResult) float64) {
-	f.less = less
 }
 
 func (f *FastBacktest) AddStrategy(buy ta.Condition, sell ta.Condition, paras ...interface{}) {
@@ -137,6 +119,15 @@ func (f *FastBacktest) AddStrategy(buy ta.Condition, sell ta.Condition, paras ..
 	f.results = append(f.results, newFastBacktestResult(trades, f.fee, f.less, paras))
 }
 
+type FastBacktestResult struct {
+	parameters  []interface{}
+	winrate     float64
+	pnl         float64
+	avgWin      float64
+	totalTrades int
+	less        func(f *FastBacktestResult) float64
+}
+
 func newFastBacktestResult(tr []STrade, fee float64, less func(f *FastBacktestResult) float64, paras ...interface{}) FastBacktestResult {
 	gains := make([]float64, 0, len(tr))
 	var wins int
@@ -158,6 +149,16 @@ func newFastBacktestResult(tr []STrade, fee float64, less func(f *FastBacktestRe
 		totalTrades: len(tr),
 		less:        less,
 	}
+}
+
+func (p *FastBacktestResult) Print(w io.Writer) {
+	//TODO
+	panic("TODO")
+}
+
+// Sorting Algo
+func (f *FastBacktest) SortingAlgo(less func(s *FastBacktestResult) float64) {
+	f.less = less
 }
 
 func SortPNL(f *FastBacktestResult) float64 {

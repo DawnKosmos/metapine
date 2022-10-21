@@ -1,7 +1,6 @@
 package psql
 
 import (
-	"errors"
 	"fmt"
 	"github.com/DawnKosmos/metapine/backend/exchange"
 	"github.com/DawnKosmos/metapine/backend/exchange/psql/gen"
@@ -28,9 +27,168 @@ Funkionweise:
 
 */
 
-func ohclvTicker(indexId int64, exname string, ticker string, resolution int64, start time.Time, end time.Time) (ch []exchange.Candle, err error) {
-	ch, err = p.ohclv(ctx, ohclvQueueParams{
-		Exchange:   exname,
+func ohclvTicker(indexId int32, ee exchange.CandleProvider, ticker string, resolution int64, start time.Time, end time.Time) (ch []exchange.Candle, err error) {
+	if resolution == 60 {
+		return ohclvMinute(indexId, ee, ticker, start, end)
+	}
+	return lowOHCLV(indexId, ee, ticker, resolution, start, end)
+}
+
+func lowOHCLV(index int32, ee exchange.CandleProvider, ticker string, resolution int64, start time.Time, end time.Time) (ch []exchange.Candle, err error) {
+	newRes := checkResolution(resolution)
+
+	args, err := p.qq.ReadTickerManager(ctx, gen.ReadTickerManagerParams{
+		IndexID:    index,
+		Resolution: int32(newRes),
+	})
+
+	if err != nil {
+		return initOhclv(index, ee, ticker, resolution, start, end)
+	}
+	//The most actual candle isn't closed, therefore we don't write it into the database
+	var lc exchange.Candle //LastCandle
+	//Add candles to the database if missing
+
+	if args.St.Unix() > start.Unix() {
+		tch, err := ee.OHCLV(ticker, newRes, start, args.St.Add(-1*time.Second))
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			if len(tch) == 0 {
+				args.St = time.Unix(0, 0).UTC()
+			} else {
+				n, err := p.WriteOHCLV(ctx, index, ee.Name(), newRes, tch)
+				if err != nil {
+					return nil, err
+				}
+				args.St = tch[0].StartTime
+				p.loggin.Println(ticker, newRes, "|", n, "| lines got added")
+			}
+		}
+	}
+	var n int64
+	//Add candles that are missing
+	if args.Et.Unix() < end.Unix() {
+		tch, err := ee.OHCLV(ticker, newRes, args.Et.Add(1*time.Second), end)
+		if err != nil || len(tch) == 0 {
+			fmt.Println(err)
+		} else {
+			fmt.Println("first", len(tch))
+			lc = tch[len(tch)-1]
+			if int64(time.Now().Sub(lc.StartTime)/time.Second) < resolution {
+				n, err = p.WriteOHCLV(ctx, index, ee.Name(), newRes, tch[:len(tch)-1])
+				if len(tch) > 1 {
+					args.Et = tch[len(tch)-2].StartTime
+				}
+			} else {
+				fmt.Println("second", len(tch))
+
+				n, err = p.WriteOHCLV(ctx, index, ee.Name(), newRes, tch)
+				args.Et = lc.StartTime
+			}
+			p.loggin.Println(ticker, newRes, "|", n, "| lines got added")
+		}
+	}
+
+	err = p.qq.UpdateTickerManager(ctx, gen.UpdateTickerManagerParams{
+		St:         args.St,
+		Et:         args.Et,
+		IndexID:    index,
+		Resolution: int32(newRes),
+	})
+	if err != nil {
+		fmt.Println("updatey not workugn", err)
+	}
+
+	out, err := p.ohclv(ctx, ohclvQueueParams{
+		Exchange:   ee.Name(),
+		IndexId:    index,
+		Resolution: newRes,
+		StartTime:  start,
+		EndTime:    end,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if time.Now().Unix()-last(out).StartTime.Unix() < newRes {
+		out = append(out, lc)
+	}
+
+	return exchange.ConvertChartResolution(newRes, resolution, out)
+}
+
+// INIT functions
+// Gets Called when the Ticker+Resolution does not exist and needs to be initialized
+func initOhclv(indexId int32, ee exchange.CandleProvider, ticker string, resolution int64, start time.Time, end time.Time) (ch []exchange.Candle, err error) {
+	newRes := checkResolution(resolution)
+
+	switch {
+	case newRes >= 3600*3:
+		ch, err = highInitOhclv(indexId, ee, ticker, newRes, start, end)
+		if err != nil {
+			return nil, err
+		}
+	case 60 == newRes:
+	default:
+		ch, err = lowInitOhclv(indexId, ee, ticker, newRes, start, end)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return exchange.ConvertChartResolution(newRes, resolution, ch)
+}
+
+func lowInitOhclv(indexId int32, ee exchange.CandleProvider, ticker string, resolution int64, start time.Time, end time.Time) (ch []exchange.Candle, err error) {
+	ch, err = ee.OHCLV(ticker, resolution, start, end)
+	if err != nil {
+		return nil, err
+	}
+	lc := ch[len(ch)-1]
+
+	var n int64
+	if int64(time.Now().Sub(lc.StartTime)/time.Second) < resolution {
+		n, err = p.WriteOHCLV(ctx, indexId, ee.Name(), resolution, ch[:len(ch)-1])
+		lc = ch[len(ch)-2]
+	} else {
+		n, err = p.WriteOHCLV(ctx, indexId, ee.Name(), resolution, ch)
+	}
+	if err != nil {
+		return nil, err
+	}
+	p.loggin.Println(n, "candles got inserted")
+
+	p.qq.CreateTickerManager(ctx, gen.CreateTickerManagerParams{
+		IndexID:    indexId,
+		Resolution: int32(resolution),
+		St:         ch[0].StartTime,
+		Et:         lc.StartTime,
+	})
+	return ch, err
+}
+
+func highInitOhclv(indexId int32, ee exchange.CandleProvider, ticker string, resolution int64, start time.Time, end time.Time) (ch []exchange.Candle, err error) {
+	ch, err = ee.OHCLV(ticker, resolution, time.Unix(0, 0), time.Now())
+	if err != nil {
+		return nil, err
+	}
+	lc := ch[len(ch)-1]
+	n, err := p.WriteOHCLV(ctx, indexId, ee.Name(), resolution, ch[:len(ch)-1])
+	if err != nil {
+		return nil, err
+	}
+	p.loggin.Println(n, "candles got inserted")
+
+	p.qq.CreateTickerManager(ctx, gen.CreateTickerManagerParams{
+		IndexID:    indexId,
+		Resolution: int32(resolution),
+		St:         time.Unix(0, 0), // all candles
+		Et:         ch[len(ch)-2].StartTime,
+	})
+
+	tch, err := p.ohclv(ctx, ohclvQueueParams{
+		Exchange:   ee.Name(),
 		IndexId:    indexId,
 		Resolution: resolution,
 		StartTime:  start,
@@ -40,89 +198,12 @@ func ohclvTicker(indexId int64, exname string, ticker string, resolution int64, 
 		return nil, err
 	}
 
-	ee := stringToCandleProvider(exname)
-
-	if start.Unix()-ch[0].StartTime.Unix() > resolution {
-		tch, err := ee.OHCLV(ticker, resolution, start, ch[0].StartTime.Add(-1*time.Second))
-		if err != nil {
-			return nil, err
-		}
-		if len(tch) > 1 {
-			ch = append(tch, ch...)
-			if _, err = p.WriteOHCLV(ctx, fmt.Sprintf("%s:%s", exname, ticker), indexId, resolution, tch); err != nil {
-				return nil, err
-			}
-		}
+	if lc.StartTime.Unix()-last(tch).StartTime.Unix() < resolution {
+		tch = append(tch, lc)
 	}
-	if end.Unix()-ch[len(ch)-1].StartTime.Unix() > resolution {
-		tch, err := ee.OHCLV(ticker, resolution, ch[len(ch)-1].StartTime.Add(1*time.Second), end)
-		if err != nil {
-			return nil, err
-		}
-		if len(tch) > 1 {
-			ch = append(ch, tch...)
-			if _, err := p.WriteOHCLV(ctx, fmt.Sprintf("%s:%s", exname, ticker), indexId, resolution, tch); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return nil, err
+	return tch, err
 }
 
-// Gets Called when the Ticker does not exist and needs to be initialized
-func initOhclv(name string, ticker string, resolution int64, start time.Time, end time.Time) (ch []exchange.Candle, err error) {
-	var ee exchange.CandleProvider
-	newRes := checkResolution(resolution)
+func FindMissing(st, et, start, end time.Time) {
 
-	ee = stringToCandleProvider(name)
-
-	if newRes >= 3600 {
-		ch, err = ee.OHCLV(ticker, newRes, time.Unix(1236085200, 0), time.Now())
-	} else {
-		ch, err = ee.OHCLV(ticker, newRes, start, end)
-	}
-	if err != nil {
-		return nil, err
-	}
-	if len(ch) == 0 {
-		return nil, errors.New(fmt.Sprintf("Ticker exists but no data, %v, %v", start, end))
-	}
-
-	//Database Init
-	e, err := stringToExchanges(name)
-	if err != nil {
-		return nil, err
-	}
-
-	tickerId, err := p.qq.CreateTicker(ctx, gen.CreateTickerParams{
-		Exchange: e,
-		Ticker:   ticker,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	indexId, err := p.qq.CreateIndex(ctx, indexName(name, ticker))
-	if err != nil {
-		return nil, err
-	}
-
-	err = p.qq.CreateTickerIndex(ctx, gen.CreateTickerIndexParams{
-		TickerID:      tickerId,
-		IndexID:       indexId,
-		Weight:        1,
-		Excludevolume: false,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	n, err := p.WriteOHCLV(ctx, name, int64(indexId), resolution, ch)
-	if err != nil {
-		return nil, err
-	}
-	p.loggin.Println(n, "New Candles got written in the DB")
-
-	return ch, nil
 }

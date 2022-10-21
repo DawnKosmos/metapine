@@ -23,6 +23,15 @@ type DataArr struct {
 	Years []Year `json:"years,omitempty"`
 }
 
+func (a *DataArr) AddMonth(y int, m int, done, complete bool) {
+	pos := a.AddYear(y)
+	a.Years[pos].Months[m] = Month{
+		M:        m,
+		Done:     done,
+		Complete: complete,
+	}
+}
+
 func (a *DataArr) AddYear(Y int) (arrPosition int) {
 	for i, v := range a.Years {
 		if v.Y == Y {
@@ -36,4 +45,18 @@ func (a *DataArr) AddYear(Y int) (arrPosition int) {
 	}
 	a.Years = append(a.Years, NewYear(Y))
 	return len(a.Years) - 1
+}
+
+func (a *DataArr) Has(y int, m int) bool {
+	if len(a.Years) == 0 {
+		return false
+	}
+	for _, v := range a.Years {
+		if v.Y == y {
+			if v.Months[m].Done {
+				return true
+			}
+		}
+	}
+	return false
 }

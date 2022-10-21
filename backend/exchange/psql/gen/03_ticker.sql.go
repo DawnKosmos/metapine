@@ -9,6 +9,16 @@ import (
 	"context"
 )
 
+const deleteTicker = `-- name: DeleteTicker :exec
+DELETE FROM ticker
+WHERE ticker_id = $1
+`
+
+func (q *Queries) DeleteTicker(ctx context.Context, tickerID int32) error {
+	_, err := q.db.Exec(ctx, deleteTicker, tickerID)
+	return err
+}
+
 const getTickerId = `-- name: GetTickerId :one
 SELECT ticker_id FROM ticker
 WHERE exchange = $1 and ticker = $2

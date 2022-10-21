@@ -48,7 +48,7 @@ func ConvertChartResolution(oldResolution, newResolution int64, ch []Candle) ([]
 
 // ConvertResolution converts the a lower resolution into a higher resolution
 func ConvertCandleResolution(c []Candle) Candle {
-	var out Candle = Candle{c[0].Close, c[0].High, c[0].Low, c[0].Open, c[0].Volume, c[0].StartTime}
+	var out Candle = Candle{c[0].Open, c[0].High, c[0].Close, c[0].Low, c[0].Volume, c[0].StartTime}
 	if len(c) == 1 {
 		return c[0]
 	}

@@ -12,19 +12,21 @@ SELECT starttime, open, high, close, low, volume
 FROM %s
 WHERE index_id = $1
   AND resolution = $2
-  AND starttime > $3
-  AND starttime < $4
+  AND starttime >= $3
+  AND starttime <= $4
+ORDER BY starttime
 `
 
 type ohclvQueueParams struct {
 	Exchange   string
-	IndexId    int64
+	IndexId    int32
 	Resolution int64
 	StartTime  time.Time
 	EndTime    time.Time
 }
 
 func (d *DB) ohclv(ctx context.Context, args ohclvQueueParams) ([]exchange.Candle, error) {
+
 	qq := fmt.Sprintf(ohclvQueue, getDbName(args.Exchange, args.Resolution))
 	rows, err := d.q.Query(ctx, qq, args.IndexId, args.Resolution, args.StartTime, args.EndTime)
 	if err != nil {
@@ -52,8 +54,11 @@ func (d *DB) ohclv(ctx context.Context, args ohclvQueueParams) ([]exchange.Candl
 	return items, nil
 }
 
-func (d *DB) WriteOHCLV(ctx context.Context, exchangeName string, indexId int64, res int64, args []exchange.Candle) (int64, error) {
+func (d *DB) WriteOHCLV(ctx context.Context, indexId int32, exchangeName string, res int64, args []exchange.Candle) (int64, error) {
 	tableName := getDbName(exchangeName, res)
+	if len(args) == 0 {
+		return 0, nil
+	}
 	if len(args) > 10 {
 		return d.copyFromOHCLV(ctx, tableName, indexId, res, args)
 	} else {
@@ -62,7 +67,7 @@ func (d *DB) WriteOHCLV(ctx context.Context, exchangeName string, indexId int64,
 }
 
 // CopyFrom
-func (d *DB) copyFromOHCLV(ctx context.Context, tableName string, indexId int64, res int64, args []exchange.Candle) (int64, error) {
+func (d *DB) copyFromOHCLV(ctx context.Context, tableName string, indexId int32, res int64, args []exchange.Candle) (int64, error) {
 	return d.q.CopyFrom(ctx, []string{tableName}, []string{"index_id", "resolution", "starttime", "open", "high", "close", "low", "volume"}, &iteratorForWriteOHCLV{
 		indexId:              indexId,
 		rows:                 args,
@@ -73,7 +78,7 @@ func (d *DB) copyFromOHCLV(ctx context.Context, tableName string, indexId int64,
 
 // CopyFrom
 type iteratorForWriteOHCLV struct {
-	indexId              int64
+	indexId              int32
 	rows                 []exchange.Candle
 	res                  int64
 	skippedFirstNextCall bool
@@ -115,11 +120,11 @@ INSERT INTO %s (index_id, resolution, starttime, open, high, close, low, volume)
 VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
 `
 
-func (d *DB) writeOHCLV(ctx context.Context, tableName string, indexId int64, res int64, args []exchange.Candle) (int64, error) {
+func (d *DB) writeOHCLV(ctx context.Context, tableName string, indexId int32, res int64, args []exchange.Candle) (int64, error) {
 	qq := fmt.Sprintf(writeOhclvQueue, tableName)
 	var c int64
 	for _, v := range args {
-		_, err := d.q.Exec(ctx, qq, indexId, res, v.StartTime, v.Open, v.High, v.Close, v.Low)
+		_, err := d.q.Exec(ctx, qq, indexId, res, v.StartTime, v.Open, v.High, v.Close, v.Low, v.Volume)
 		if err != nil {
 			fmt.Println(err)
 		}

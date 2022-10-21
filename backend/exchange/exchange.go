@@ -6,10 +6,10 @@ import (
 
 const HOUR int = 3600
 
-var t2020 = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
-var t2021 = time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
-var t2022 = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
-var t2023 = time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+var T2020 = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+var T2021 = time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
+var T2022 = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
+var T2023 = time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 
 type LiveTa interface {
 	Val(index int) Candle

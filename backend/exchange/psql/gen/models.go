@@ -58,7 +58,7 @@ func (ns NullExchanges) Value() (driver.Value, error) {
 	return ns.Exchanges, nil
 }
 
-type Binacelow struct {
+type Binance struct {
 	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
@@ -69,7 +69,7 @@ type Binacelow struct {
 	Volume     float32
 }
 
-type Binancehigh struct {
+type Deribit struct {
 	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
@@ -80,40 +80,7 @@ type Binancehigh struct {
 	Volume     float32
 }
 
-type Deribithigh struct {
-	IndexID    int32
-	Resolution int32
-	Starttime  time.Time
-	Open       float32
-	High       float32
-	Close      float32
-	Low        float32
-	Volume     float32
-}
-
-type Deribitlow struct {
-	IndexID    int32
-	Resolution int32
-	Starttime  time.Time
-	Open       float32
-	High       float32
-	Close      float32
-	Low        float32
-	Volume     float32
-}
-
-type Ftxhigh struct {
-	IndexID    int32
-	Resolution int32
-	Starttime  time.Time
-	Open       float32
-	High       float32
-	Close      float32
-	Low        float32
-	Volume     float32
-}
-
-type Ftxlow struct {
+type Ftx struct {
 	IndexID    int32
 	Resolution int32
 	Starttime  time.Time
@@ -127,28 +94,6 @@ type Ftxlow struct {
 type Index struct {
 	IndexID int32
 	Name    string
-}
-
-type Indexhigh struct {
-	IndexID    int32
-	Resolution int32
-	Starttime  time.Time
-	Open       float32
-	High       float32
-	Close      float32
-	Low        float32
-	Volume     float32
-}
-
-type Indexlow struct {
-	IndexID    int32
-	Resolution int32
-	Starttime  time.Time
-	Open       float32
-	High       float32
-	Close      float32
-	Low        float32
-	Volume     float32
 }
 
 type MinuteChart struct {
@@ -188,4 +133,11 @@ type TickerIndex struct {
 	IndexID       int32
 	Weight        int32
 	Excludevolume bool
+}
+
+type TickerManager struct {
+	IndexID    int32
+	Resolution int32
+	St         time.Time
+	Et         time.Time
 }

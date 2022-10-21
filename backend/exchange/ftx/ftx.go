@@ -12,14 +12,14 @@ type FTX struct {
 	Client *http.Client
 }
 
-func (f *FTX) Name() string {
-	return "ftx"
-}
-
 const URL = "https://ftx.com/api/"
 
 func New() *FTX {
 	return &FTX{&http.Client{}}
+}
+
+func (f *FTX) Name() string {
+	return "ftx"
 }
 
 func (f *FTX) request(method string, path string, body []byte) *http.Request {

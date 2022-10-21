@@ -57,3 +57,7 @@ func MaxInt(f ...int) (val int, position int) {
 	}
 	return
 }
+
+func Last[T any](a []T) T {
+	return a[len(a)-1]
+}

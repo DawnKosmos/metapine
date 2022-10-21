@@ -3,24 +3,25 @@ package backtest
 import (
 	"github.com/DawnKosmos/metapine/backend/exchange"
 	"github.com/DawnKosmos/metapine/backend/series/ta"
-	"github.com/DawnKosmos/metapine/helper/formula"
 )
 
 const LONG = true
 const SHORT = false
 
+type Mode int
+
+const (
+	OnlySHORT Mode = -1
+	ALL            = 0
+	OnlyLONG       = 1
+)
+
 type BacktestParameters struct {
-	FeeFlat    float64
 	Pyramiding int
 	Slippage   float64
 	MakerFee   float64
 	TakerFee   float64
 	Size       Size
-}
-
-type TradeExecution interface {
-	CreateTrade(Side bool, ch []exchange.Candle) (Trade, error) //TradeExecution defines the strategy and gets as input an array from trade start to end
-	SetOHCLV(o ta.Chart)                                        //Just set the OHCLV, usually not used, but if needed to create a trade. it can be used
 }
 
 type order struct {
@@ -35,7 +36,6 @@ type SimpleStrategy struct {
 
 func DefaultParameters() BacktestParameters {
 	return BacktestParameters{
-		FeeFlat:    0,
 		Pyramiding: 1,
 		Slippage:   0,
 		MakerFee:   0,
@@ -47,39 +47,22 @@ func DefaultParameters() BacktestParameters {
 	}
 }
 
-func NewStrategy(e ta.Chart, parameters BacktestParameters) *SimpleStrategy {
-
-}
-
-func NewFast(chart ta.Chart, buy, sell ta.Condition, te TradeExecution, Pyraminding int) SimpleStrategy {
-	ch, l, s := chart.Data(), buy.Data(), sell.Data()
-	te.SetOHCLV(chart)
-	parameters := DefaultParameters()
-	if Pyraminding > 1 {
-		parameters.Pyramiding = Pyraminding
-	}
-
-	sl, _ := formula.MinInt(len(ch), len(l), len(s))
-	ch = ch[len(ch)-sl+1:]
-	l = l[len(l)-sl:]
-	s = s[len(s)-sl:]
-
-	var trades []*Trade
-	var tempOrderLong, tempOrderShort []exchange.Candle
-
-	for i, c := range ch[:len(ch)-1] {
-		if l[i] {
-			for j := 0; j < min(len(tempOrderShort), parameters.Pyramiding); j++ {
-
-			}
-		}
-	}
-
-}
-
 func min(a, b int) int {
 	if a > b {
 		return b
 	}
 	return a
+}
+
+// A better representation of the PNL overtime
+type CandlePNL struct {
+	Open  float64
+	High  float64
+	Close float64
+	Low   float64
+}
+
+func PNLCalcCandle(avgEntry float64, ch exchange.Candle) (c CandlePNL) {
+	//TODO
+	return
 }

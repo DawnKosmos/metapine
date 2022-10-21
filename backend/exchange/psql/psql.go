@@ -14,6 +14,7 @@ var p *DB
 var ctx = context.Background()
 
 var ErrNoRows = pgx.ErrNoRows
+var goroutines bool
 
 type CustomLogger struct {
 }
@@ -22,6 +23,12 @@ func (c CustomLogger) Write(p []byte) (n int, err error) {
 	return fmt.Println(string(p))
 }
 
+/*
+The DB struct takes care of all queries.
+q is the database connection
+qq are generated queries
+loggin
+*/
 type DB struct {
 	q      *pgxpool.Pool
 	qq     *gen.Queries
@@ -33,6 +40,19 @@ func (d *DB) Ping() error {
 	return d.q.Ping(ctx)
 }
 
+// Lets you set your own logger
+func SetLogger(l *log.Logger) {
+	p.loggin = l
+}
+
+func SupportGoRoutines(b bool) {
+	goroutines = b
+}
+
+/*
+SetPSQL sets the data base connection
+I know global variables are bad and you I will change it later
+*/
 func SetPSQL(host, user, databaseName, password string, port int) {
 	params := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, databaseName)
 	//	pg, err := sql.Open("postgres", params)
