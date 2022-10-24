@@ -1,5 +1,7 @@
 package backtest
 
+import "time"
+
 type FillType int
 
 const (
@@ -15,5 +17,6 @@ type Fill struct {
 	Type  FillType
 	Price float64
 	Size  float64
-	Time  int64
+	Time  time.Time
+	Fee   float64
 }

@@ -1,7 +1,6 @@
 package backtest
 
 import (
-	"github.com/DawnKosmos/metapine/backend/exchange"
 	"github.com/DawnKosmos/metapine/backend/series/ta"
 )
 
@@ -16,12 +15,16 @@ const (
 	OnlyLONG       = 1
 )
 
+type FeeInfo struct {
+	Maker    float64
+	Taker    float64
+	Slippage float64
+}
+
 type BacktestParameters struct {
 	Pyramiding int
-	Slippage   float64
-	MakerFee   float64
-	TakerFee   float64
-	Size       Size
+	Fee        *FeeInfo
+	Size       *Size
 }
 
 type order struct {
@@ -34,13 +37,11 @@ type SimpleStrategy struct {
 	parameters *BacktestParameters
 }
 
-func DefaultParameters() BacktestParameters {
-	return BacktestParameters{
+func DefaultParameters() *BacktestParameters {
+	return &BacktestParameters{
 		Pyramiding: 1,
-		Slippage:   0,
-		MakerFee:   0,
-		TakerFee:   0,
-		Size: Size{
+		Fee:        DefaultFeeInfo(),
+		Size: &Size{
 			Type: AccountSize,
 			Val:  100,
 		},
@@ -52,17 +53,4 @@ func min(a, b int) int {
 		return b
 	}
 	return a
-}
-
-// A better representation of the PNL overtime
-type CandlePNL struct {
-	Open  float64
-	High  float64
-	Close float64
-	Low   float64
-}
-
-func PNLCalcCandle(avgEntry float64, ch exchange.Candle) (c CandlePNL) {
-	//TODO
-	return
 }

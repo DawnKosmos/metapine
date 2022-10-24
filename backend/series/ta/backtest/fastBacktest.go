@@ -83,7 +83,7 @@ func (f *FastBacktest) AddStrategy(buy ta.Condition, sell ta.Condition, paras ..
 	//
 
 	var tempOrderLong, tempOrderShort []exchange.Candle //BackTest
-	var trades []STrade
+	var trades []SimpleTrade
 
 	for j := iStart; j < len(ch); j++ {
 		if l[j] {
@@ -128,7 +128,7 @@ type FastBacktestResult struct {
 	less        func(f *FastBacktestResult) float64
 }
 
-func newFastBacktestResult(tr []STrade, fee float64, less func(f *FastBacktestResult) float64, paras ...interface{}) FastBacktestResult {
+func newFastBacktestResult(tr []SimpleTrade, fee float64, less func(f *FastBacktestResult) float64, paras ...interface{}) FastBacktestResult {
 	gains := make([]float64, 0, len(tr))
 	var wins int
 	var pnl float64 = 1

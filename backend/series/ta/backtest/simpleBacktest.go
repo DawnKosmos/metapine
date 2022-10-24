@@ -26,19 +26,42 @@ func NewStrategy(ch ta.Chart) *BackTest {
 	}
 }
 
-/*
+func (b *BackTest) AddIndicator(indicators ...ta.Series) *BackTest {
+	d := b.ch.Data()
+	indi := make([][]SafeFloat, len(d), len(d))
+	f := indicators[0].Data()
+	l1 := len(indicators)
 
+	for i := 0; i < len(d)-len(f); i++ {
+		init := make([]SafeFloat, l1, l1)
+		indi = append(indi, init)
+	}
 
+	var j int = len(d) - len(f)
+	for _, v := range f {
+		init := make([]SafeFloat, l1, l1)
+		init[0] = SafeFloat{Safe: true, Value: v}
+		indi[j] = init
+		j++
+	}
 
- */
-
-func (b *BackTest) AddIndicator(series ...ta.Series) *BackTest {
+	for _, vv := range indicators[1:] {
+		var i int = 1
+		f = vv.Data()
+		j = len(d) - len(f)
+		for _, v := range f {
+			indi[j][i] = SafeFloat{Safe: true, Value: v}
+		}
+		i++
+	}
+	b.Indicators = indi
 	return b
 }
 
-func (b *BackTest) SetStrategy(buy, sell ta.Condition) *BackTestStrategy {
+func (bt *BackTest) CreateStrategy(name string, buy, sell ta.Condition, TE TradeExecution, parameters BacktestParameters) *BackTestStrategy {
+	var b = new(BackTestStrategy)
 
-	return nil
+	return b
 }
 
 func (b *BackTestStrategy) Filter(info string, op Filter) *BackTestStrategy {

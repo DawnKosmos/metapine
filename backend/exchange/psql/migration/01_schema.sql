@@ -1,4 +1,4 @@
--- Speichern 1 min, 5 min, 15 min, 1h, 3h , 4h, 6h
+-- Speichern 1 Min, 5 Min, 15 Min, 1h, 3h , 4h, 6h
 
 CREATE TYPE exchanges as ENUM (
     'ftx',
