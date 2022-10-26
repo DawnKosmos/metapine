@@ -2,6 +2,7 @@ package backtest
 
 import (
 	"errors"
+	"fmt"
 	"github.com/DawnKosmos/metapine/backend/exchange"
 	"time"
 )
@@ -16,9 +17,17 @@ type Trade struct {
 	//The PNL starts with the EntrySignalTime. Every Tick represents 1 Candle
 	//This information is needed to calculate the Overall PNL of the Indicator
 	Pnl       []float64
-	PnlCandle []CandlePNL
 	Indicator []SafeFloat
+	UsdVolume float64
 	Fee       float64
+}
+
+func newTrade(Side bool, EntrySignalTime time.Time) *Trade {
+	return &Trade{
+		Side:            Side,
+		EntrySignalTime: EntrySignalTime,
+		Pnl:             []float64{},
+	}
 }
 
 func NewTrade(f Fill) *Trade {
@@ -39,21 +48,25 @@ func NewTrade(f Fill) *Trade {
 		t.SellSize = f.Size
 		t.NetSize -= f.Size
 	}
+
 	return t
 }
 
 // PnlCalculation TODO unit test
 func (t *Trade) PnlCalculation(c exchange.Candle) {
 	var realisedPNL float64
-	if t.Side {
-		realisedPNL = 1 + (t.BuySize-t.NetSize)*(PnlCalc(t.AvgBuy, t.AvgSell)) - t.Fee
-	} else {
-		realisedPNL = 1 - (t.SellSize+t.NetSize)*(PnlCalc(t.AvgSell, t.AvgBuy)) - t.Fee
+	if t.SellSize != 0 && t.BuySize != 0 {
+		if t.Side {
+			realisedPNL = (t.AvgSell - t.AvgBuy) * (t.BuySize - t.NetSize)
+		} else {
+			realisedPNL = -(t.AvgBuy - t.AvgSell) * (t.SellSize + t.NetSize)
+		}
+		fmt.Println(t.AvgBuy, t.AvgSell, t.avgPrice)
 	}
 
-	pp := PNLCalcCandle(t.Side, realisedPNL, t.NetSize, t.avgPrice, c)
-	t.PnlCandle = append(t.PnlCandle, pp)
-	t.Pnl = append(t.Pnl, pp.Close)
+	pnl := realisedPNL + (c.Close-t.avgPrice)*t.NetSize
+
+	t.Pnl = append(t.Pnl, pnl)
 }
 
 func (t *Trade) Add(f Fill) {
@@ -80,6 +93,8 @@ func (t *Trade) addTooLong(f Fill) {
 		t.SellSize += f.Size
 	}
 
+	t.UsdVolume += f.Size * f.Price
+
 	t.Fee += f.Fee
 	t.Fills = append(t.Fills, f)
 }
@@ -87,7 +102,7 @@ func (t *Trade) addTooLong(f Fill) {
 func (t *Trade) addTooShort(f Fill) {
 	if !f.Side {
 		t.avgPrice = (f.Size*f.Price - t.avgPrice*t.NetSize) / (f.Size - t.NetSize)
-		t.AvgSell = t.AvgSell*t.SellSize + f.Size*f.Price/(t.SellSize+f.Size)
+		t.AvgSell = (t.AvgSell*t.SellSize + f.Size*f.Price) / (t.SellSize + f.Size)
 		t.SellSize += f.Size
 		t.NetSize -= f.Size
 	} else {
@@ -99,6 +114,8 @@ func (t *Trade) addTooShort(f Fill) {
 		t.BuySize += f.Size
 		t.NetSize += f.Size
 	}
+	t.UsdVolume += f.Size * f.Price
+
 	t.Fills = append(t.Fills, f)
 	t.Fee += f.Fee
 }
@@ -110,25 +127,39 @@ func (t *Trade) Close(price float64, slippage float64, close time.Time, feeType 
 	var f Fill
 	//Trade Fertigstellen
 	if t.Side {
+		fprice := price - slippage
 		f = Fill{
 			Side:  false,
 			Type:  feeType,
-			Price: price - slippage,
+			Price: fprice,
 			Size:  t.NetSize,
 			Time:  close,
-			Fee:   fee * t.NetSize,
+			Fee:   fee * t.NetSize * fprice,
 		}
+		//t.AvgSell = t.AvgSell*t.SellSize + f.Size*f.Price/(t.SellSize+f.Size)
+		//t.SellSize += t.BuySize
 	} else {
+		fprice := price + slippage
 		f = Fill{
 			Side:  true,
 			Type:  feeType,
-			Price: price + slippage,
+			Price: fprice,
 			Size:  -t.NetSize,
 			Time:  close,
-			Fee:   fee * -t.NetSize,
+			Fee:   fprice * fee * -t.NetSize,
 		}
+		//t.AvgBuy = (t.AvgBuy*t.BuySize + f.Size*f.Price) / (t.BuySize + f.Size)
+		//t.BuySize += -t.NetSize
 	}
+
+	t.CloseSignalTime = close
+	//t.NetSize = 0
+
 	t.Add(f)
+}
+
+func (t *Trade) Start() time.Time {
+	return t.EntrySignalTime
 }
 
 // SimpleTrade Or SimpleTrade is used For FastBacktesting, this mode is used to iterate many parameters.
@@ -158,4 +189,19 @@ func (t *SimpleTrade) Pnl(fee float64) float64 {
 		x = -1 * (t.Exit - t.Entry) / t.Entry
 	}
 	return x - (fee * 0.01)
+}
+
+// TRADES
+type Trades []*Trade
+
+func (t Trades) Less(i, j int) bool {
+	return t[i].EntrySignalTime.Unix() < t[j].EntrySignalTime.Unix()
+}
+
+func (t Trades) Swap(i, j int) {
+	t[i], t[j] = t[j], t[i]
+}
+
+func (t Trades) Len() int {
+	return len(t)
 }

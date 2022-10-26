@@ -20,6 +20,13 @@ type Condition interface {
 	ResolutionStartTime
 }
 
+type Updater interface {
+	Update(NewTick bool) //Updates the latest Tick, When Update(true) adds a Tick
+	SetLimit(i int)      //Sets the Limit that needs to be allocated for the indicator to work
+	ExecuteLimit()       //Gets called once
+	GetUpdateGroup() *UpdateGroup
+}
+
 type ResolutionStartTime interface {
 	StartTime() int64
 	Resolution() int64

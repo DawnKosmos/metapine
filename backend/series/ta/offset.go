@@ -11,12 +11,13 @@ func OffS(src Series, n int) Series {
 	s.res = src.Resolution()
 	s.st = s.res*int64(n) + src.StartTime()
 	s.src = src
+	s.offset = n
 	return s
 }
 
 func (s *offsetS) Data() []float64 {
 	f := s.src.Data()
-	return f[:len(f)-s.offset-1]
+	return f[:len(f)-s.offset]
 }
 
 type offsetC struct {
@@ -35,5 +36,5 @@ func OffC(src Condition, n int) Condition {
 
 func (s *offsetC) Data() []bool {
 	f := s.src.Data()
-	return f[:len(f)-s.offset-1]
+	return f[:len(f)-s.offset]
 }

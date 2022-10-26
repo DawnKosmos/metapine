@@ -20,7 +20,7 @@ ftx.RegisterAccount("key", "name")
 	buy := Crossover(saphir, cc)
 	sell := Crossunder(saphir,cc)
 
-	strat := strategy.New(strategy.Parameter{pyramiding: 2, Size: [size.Account,50]}
+	strat := strategy.New(strategy.Parameter{pyramiding: 2, size: [size.Account,50]}
 
 	strat.Long(ftx.Account("name"),buy, strategy.ONCLOSE, execute.Market)
 	start.Short(ftx.Account("name"), sell, strategy.ONCLOSE, execute.Marke)

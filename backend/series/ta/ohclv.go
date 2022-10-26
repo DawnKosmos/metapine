@@ -38,15 +38,23 @@ func (o *OHCLV) Resolution() int64 {
 }
 
 func ChartSources(e Chart) (o, h, c, l, v Series) {
-	var ff [5][]float64
 	ch := e.Data()
-	for i, c := range ch {
-		ff[0][i], ff[1][i], ff[2][i], ff[3][i], ff[4][i] = c.Open, c.High, c.Close, c.Low, c.Volume
+	open := make([]float64, 0, len(ch))
+	high := make([]float64, 0, len(ch))
+	low := make([]float64, 0, len(ch))
+	closes := make([]float64, 0, len(ch))
+	volume := make([]float64, 0, len(ch))
+	for _, c := range ch {
+		open = append(open, c.Open)
+		high = append(high, c.High)
+		low = append(low, c.Low)
+		closes = append(closes, c.Close)
+		volume = append(volume, c.Volume)
 	}
-	o = empty(ff[0], e.StartTime(), e.Resolution())
-	h = empty(ff[1], e.StartTime(), e.Resolution())
-	c = empty(ff[2], e.StartTime(), e.Resolution())
-	l = empty(ff[3], e.StartTime(), e.Resolution())
-	v = empty(ff[4], e.StartTime(), e.Resolution())
+	o = empty(open, e.StartTime(), e.Resolution())
+	h = empty(high, e.StartTime(), e.Resolution())
+	c = empty(closes, e.StartTime(), e.Resolution())
+	l = empty(low, e.StartTime(), e.Resolution())
+	v = empty(volume, e.StartTime(), e.Resolution())
 	return
 }

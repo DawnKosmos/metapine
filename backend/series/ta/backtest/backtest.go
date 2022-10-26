@@ -2,6 +2,7 @@ package backtest
 
 import (
 	"github.com/DawnKosmos/metapine/backend/series/ta"
+	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/size"
 )
 
 const LONG = true
@@ -22,9 +23,10 @@ type FeeInfo struct {
 }
 
 type BacktestParameters struct {
+	Modus      Mode
 	Pyramiding int
 	Fee        *FeeInfo
-	Size       *Size
+	Size       *size.Size
 }
 
 type order struct {
@@ -41,10 +43,7 @@ func DefaultParameters() *BacktestParameters {
 	return &BacktestParameters{
 		Pyramiding: 1,
 		Fee:        DefaultFeeInfo(),
-		Size: &Size{
-			Type: AccountSize,
-			Val:  100,
-		},
+		Size:       size.New(size.Account, 1),
 	}
 }
 

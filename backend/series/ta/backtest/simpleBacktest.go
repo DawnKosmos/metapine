@@ -1,32 +1,48 @@
 package backtest
 
-import "github.com/DawnKosmos/metapine/backend/series/ta"
+import (
+	"fmt"
+	"github.com/DawnKosmos/metapine/backend/series/ta"
+	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/size"
+	"github.com/DawnKosmos/metapine/helper/formula"
+	"sort"
+)
 
 type BackTest struct {
 	ch ta.Chart
 	//PNL starting with first Candle
-	PnlCandle  []CandlePNL
-	Pnl        []float64
 	Indicators [][]SafeFloat
 }
 
 type BackTestStrategy struct {
 	//buy, sell  ta.Condition
 	//TE         TradeExecution
-	Name       string
-	Parameters BacktestParameters
+	Name string
+	Pnl  []float64
+
+	Parameters BTParameter
 	tr         []*Trade
+}
+
+type BTParameter struct {
+	Modus      Mode
+	Pyramiding int
+	Fee        *FeeInfo
+	Balance    float64
+	SizeType   size.SizeBase
 }
 
 func NewStrategy(ch ta.Chart) *BackTest {
 	return &BackTest{
-		ch:        ch,
-		PnlCandle: []CandlePNL{},
-		Pnl:       []float64{},
+		ch: ch,
 	}
 }
 
 func (b *BackTest) AddIndicator(indicators ...ta.Series) *BackTest {
+	if len(indicators) == 0 {
+		return b
+	}
+
 	d := b.ch.Data()
 	indi := make([][]SafeFloat, len(d), len(d))
 	f := indicators[0].Data()
@@ -51,6 +67,7 @@ func (b *BackTest) AddIndicator(indicators ...ta.Series) *BackTest {
 		j = len(d) - len(f)
 		for _, v := range f {
 			indi[j][i] = SafeFloat{Safe: true, Value: v}
+			j++
 		}
 		i++
 	}
@@ -58,9 +75,64 @@ func (b *BackTest) AddIndicator(indicators ...ta.Series) *BackTest {
 	return b
 }
 
-func (bt *BackTest) CreateStrategy(name string, buy, sell ta.Condition, TE TradeExecution, parameters BacktestParameters) *BackTestStrategy {
+func (bt *BackTest) CreateStrategy(name string, buy, sell ta.Condition, TE TradeExecution, parameters BTParameter) *BackTestStrategy {
 	var b = new(BackTestStrategy)
+	b.Name = name
+	b.Parameters = parameters
+	if b.Parameters.Pyramiding == 0 {
+		b.Parameters.Pyramiding = 1
+	}
+	p := b.Parameters.Pyramiding
 
+	ch, l, s := bt.ch.Data(), buy.Data(), sell.Data()
+	sl, _ := formula.MinInt(len(ch), len(l), len(s))
+	ch = ch[len(ch)-sl:]
+	l = l[len(l)-sl:]
+	s = s[len(s)-sl:]
+	b.Pnl = make([]float64, len(ch), len(ch))
+	var indicators [][]SafeFloat
+	if bt.Indicators != nil {
+		indicators = bt.Indicators[len(bt.Indicators)-sl:]
+	}
+
+	var indexLong, indexShort []int
+	var tr []*Trade
+
+	fmt.Println(len(ch))
+	for j := 0; j < len(ch)-1; j++ {
+		if l[j] {
+			for i := 0; i < min(len(indexShort), p); i++ {
+				index := indexShort[i]
+				t, err := TE.CreateTrade(SHORT, ch[index+1:], j-index, indicators[index], parameters.Balance, *parameters.Fee)
+				if err != nil {
+					fmt.Println("Create Shorts at", i, err)
+					continue
+				}
+				tr = append(tr, t)
+			}
+			indexShort = indexShort[:0]
+			if parameters.Modus != OnlySHORT {
+				indexLong = append(indexLong, j)
+			}
+		}
+		if s[j] {
+			for i := 0; i < min(len(indexLong), p); i++ {
+				index := indexLong[i]
+				t, err := TE.CreateTrade(LONG, ch[index+1:], j-index, indicators[index], parameters.Balance, *parameters.Fee)
+				if err != nil {
+					fmt.Println("Create Longs at", i, err)
+					continue
+				}
+				tr = append(tr, t)
+			}
+			indexLong = indexLong[:0]
+			if parameters.Modus != OnlyLONG {
+				indexShort = append(indexShort, j)
+			}
+		}
+	}
+	sort.Sort(Trades(tr))
+	b.tr = tr
 	return b
 }
 
@@ -73,8 +145,8 @@ func (b *BackTestStrategy) Filter(info string, op Filter) *BackTestStrategy {
 	}
 	return &BackTestStrategy{
 		Name:       b.Name + info,
-		Parameters: BacktestParameters{},
-		tr:         nil,
+		Parameters: b.Parameters,
+		tr:         tt,
 	}
 }
 
@@ -89,11 +161,12 @@ func (b *BackTestStrategy) Split(info string, op Filter) (*BackTestStrategy, *Ba
 	}
 
 	return &BackTestStrategy{
-			Name: b.Name + info + "true",
-			tr:   tt,
+			Name:       b.Name + info + "true",
+			Parameters: b.Parameters,
+			tr:         tt,
 		}, &BackTestStrategy{
 
-			Parameters: BacktestParameters{},
+			Parameters: b.Parameters,
 			Name:       b.Name + info + "false",
 			tr:         tf,
 		}

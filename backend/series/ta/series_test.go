@@ -1,25 +1,18 @@
 package ta
 
 import (
-	"fmt"
-	"math/rand"
+	"github.com/DawnKosmos/metapine/backend/exchange"
+	"github.com/DawnKosmos/metapine/backend/exchange/ftx"
 	"testing"
 )
 
 func TestTypeTest(t *testing.T) {
-	rand.Seed(31121)
-	var f []float64
-	for i := 0; i < 100; i++ {
-		f = append(f, float64(rand.Intn(100)))
-	}
+	ff := ftx.New()
 
-	src := empty(f, 1000, 3600)
-	rsi := Rsi(src, 10)
-	mm := Smaller(rsi, 50)
-	f = rsi.Data()
-	ff := mm.Data()
+	ch := NewOHCLV(ff, "btc-perp", exchange.T2022, exchange.T2023, 3600*4)
+	//o, h, c, l, v := ChartSources(ch)
+	c := Close(ch)
+	rsi := Ema(c, 10)
+	Crossover(rsi)
 
-	for i, v := range f {
-		fmt.Println(v, ff[i])
-	}
 }

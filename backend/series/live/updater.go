@@ -9,7 +9,7 @@ const ONCLOSE UpdateMode = 0
 var ONTICK = -1
 
 /*
-	The UpdateGroup manages that  calculations of an Indicator get Updated in the right order.
+The UpdateGroup manages that  calculations of an Indicator get Updated in the right order.
 */
 type UpdateGroup struct {
 	Name string
@@ -54,13 +54,6 @@ func (ug *UpdateGroup) Exit() {
 	ug.tick <- true
 }
 
-type Updater interface {
-	Update(NewTick bool) //Updates the latest Tick, When Update(true) adds a Tick
-	SetLimit(i int)      //Sets the Limit that needs to be allocated for the indicator to work
-	ExecuteLimit()       // Gets called once
-	GetUpdateGroup() *UpdateGroup
-}
-
 type updater struct {
 	limit int
 	ug    *UpdateGroup
@@ -79,6 +72,6 @@ func (u *updater) GetUpdateGroup() *UpdateGroup {
 /*
 strategy.New(strategy.Parameters{})
 
-strategy.Long(strategy.Size{account,10%},buy, startegy.ONCLOSE, reduceonly}
+strategy.Long(strategy.size{account,10%},buy, startegy.ONCLOSE, reduceonly}
 
 */

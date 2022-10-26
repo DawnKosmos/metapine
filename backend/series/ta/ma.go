@@ -16,7 +16,7 @@ func Sma(src Series, l int) Series {
 	}
 
 	s := new(SMA)
-	s.res, s.st = src.Resolution(), src.StartTime()+src.Resolution()*int64(l)
+	s.res, s.st = src.Resolution(), src.StartTime()+src.Resolution()*int64(l-1)
 	f := src.Data()
 	l1 := len(f)
 	d := make([]float64, 0, l1-l+1)
@@ -38,7 +38,7 @@ type EMA struct {
 	Avg float64
 }
 
-func Ema(src Series, l int) *EMA {
+func Ema(src Series, l int) Series {
 	if l < 2 {
 		log.Panicln("ema invalid len", l)
 	}
@@ -54,6 +54,7 @@ func Ema(src Series, l int) *EMA {
 		d = append(d, avg)
 	}
 	s.Avg = avg // For live trading
+	s.data = d
 	return s
 }
 

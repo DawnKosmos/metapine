@@ -32,5 +32,6 @@ func Lowest(src Series, l int) Series {
 		d = append(d, lo)
 	}
 
+	s.data = d
 	return s
 }

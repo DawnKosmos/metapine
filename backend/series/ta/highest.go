@@ -31,5 +31,7 @@ func Highest(src Series, l int) Series {
 		}
 		d = append(d, high)
 	}
+
+	s.data = d
 	return s
 }

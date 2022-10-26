@@ -40,7 +40,7 @@ func (r *rsi) Update(new bool) {
 		var gain, loss float64 = gainLoss(src2, src1)
 		r.gain = r.alpha*gain + (1-r.alpha)*r.gain
 		r.loss = r.alpha*loss + (1+r.alpha)*r.loss
-		r.recent = src0 + 1
+		r.recent = src0 + 1 // change recent because its not used
 	}
 	if r.recent != src0 {
 		r.recent = src0
