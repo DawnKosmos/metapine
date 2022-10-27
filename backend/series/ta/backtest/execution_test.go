@@ -6,15 +6,16 @@ import (
 	"github.com/DawnKosmos/metapine/backend/exchange/ftx"
 	"github.com/DawnKosmos/metapine/backend/series/ta"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/distribution"
+	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/size"
 	"testing"
 )
 
 func TestExecution(t *testing.T) {
-	sl := NewScaledLimit(0, 5, 10).Size(2).Distribution(distribution.Exponential)
+	sl := NewScaledLimit(0, 15, 10).Size(2).Distribution(distribution.Exponential)
 
 	ff := ftx.New()
 
-	ch := ta.NewOHCLV(ff, "BTC-perp", exchange.T2020, exchange.T2023, 3600*24)
+	ch := ta.NewOHCLV(ff, "FTT-perp", exchange.T2022, exchange.T2023, 3600*24)
 	o, h, c, l, v := ta.ChartSources(ch)
 
 	buy, sell := solape(o, ta.Roc, v, 4, 10)
@@ -31,16 +32,18 @@ func TestExecution(t *testing.T) {
 			Taker:    0.0005,
 			Slippage: 1,
 		},
-		Balance: 10000,
+		Balance:  10000,
+		SizeType: size.Account,
+		PnlGraph: false,
 	})
 
 	var long, short float64
 	var cc int
 	for _, v := range bt.tr {
 		if v.Side {
-			long += v.PNL()
+			long += v.RealisedPNL()
 		} else {
-			short += v.PNL()
+			short += v.RealisedPNL()
 		}
 		cc++
 	}

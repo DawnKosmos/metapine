@@ -15,7 +15,7 @@ type TEInfo struct {
 }
 
 type TradeExecution interface {
-	CreateTrade(Side bool, ch []exchange.Candle, exitCandle int, indicators []SafeFloat, sizeInUsd float64, fee FeeInfo) (*Trade, error) //TradeExecution defines the strategy and gets as input an array from trade start to end
+	CreateTrade(Side bool, ch []exchange.Candle, exitCandle int, indicators []SafeFloat, sizeInUsd float64, fee FeeInfo, pnlgraph bool) (*Trade, error) //TradeExecution defines the strategy and gets as input an array from trade start to end
 	GetInfo() TEInfo
 }
 
@@ -47,7 +47,7 @@ func NewScaledLimit(min float64, max float64, OrderCount int) *ScaledLimit {
 	}
 }
 
-func (s *ScaledLimit) CreateTrade(Side bool, ch []exchange.Candle, exitCandle int, indicators []SafeFloat, sizeInUsd float64, fee FeeInfo) (*Trade, error) {
+func (s *ScaledLimit) CreateTrade(Side bool, ch []exchange.Candle, exitCandle int, indicators []SafeFloat, sizeInUsd float64, fee FeeInfo, pnlgraph bool) (*Trade, error) {
 	if exitCandle == 0 {
 		return nil, errors.New("same candle")
 	}
@@ -60,7 +60,9 @@ func (s *ScaledLimit) CreateTrade(Side bool, ch []exchange.Candle, exitCandle in
 		dist := s.distribution(ch[0].Open, s.Min, s.Max, s.OrderCount)
 		for i := 0; i < exitCandle; {
 			if nMax == n {
-				t.PnlCalculation(ch[i])
+				if pnlgraph {
+					t.PnlCalculation(ch[i])
+				}
 				i++
 				continue
 			}
@@ -76,7 +78,9 @@ func (s *ScaledLimit) CreateTrade(Side bool, ch []exchange.Candle, exitCandle in
 				})
 				n++
 			} else {
-				t.PnlCalculation(ch[i])
+				if pnlgraph {
+					t.PnlCalculation(ch[i])
+				}
 				i++
 			}
 		}
@@ -84,7 +88,9 @@ func (s *ScaledLimit) CreateTrade(Side bool, ch []exchange.Candle, exitCandle in
 		dist := s.distribution(ch[0].Open, -s.Min, -s.Max, s.OrderCount)
 		for i := 0; i < exitCandle; {
 			if nMax == n {
-				t.PnlCalculation(ch[i])
+				if pnlgraph {
+					t.PnlCalculation(ch[i])
+				}
 				i++
 				continue
 			}
@@ -100,7 +106,9 @@ func (s *ScaledLimit) CreateTrade(Side bool, ch []exchange.Candle, exitCandle in
 				})
 				n++
 			} else {
-				t.PnlCalculation(ch[i])
+				if pnlgraph {
+					t.PnlCalculation(ch[i])
+				}
 				i++
 			}
 		}
@@ -111,10 +119,6 @@ func (s *ScaledLimit) CreateTrade(Side bool, ch []exchange.Candle, exitCandle in
 	}
 	t.Close(ch[exitCandle].Open, fee.Slippage, ch[exitCandle].StartTime, MARKET, fee.Maker)
 	return t, nil
-}
-
-func (t *Trade) PNL() float64 {
-	return t.Pnl[len(t.Pnl)-1] - t.Fee
 }
 
 func (s *ScaledLimit) GetInfo() TEInfo {

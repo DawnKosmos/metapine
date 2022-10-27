@@ -30,6 +30,7 @@ type BTParameter struct {
 	Fee        *FeeInfo
 	Balance    float64
 	SizeType   size.SizeBase
+	PnlGraph   bool
 }
 
 func NewStrategy(ch ta.Chart) *BackTest {
@@ -93,23 +94,39 @@ func (bt *BackTest) CreateStrategy(name string, buy, sell ta.Condition, TE Trade
 	var indicators [][]SafeFloat
 	if bt.Indicators != nil {
 		indicators = bt.Indicators[len(bt.Indicators)-sl:]
+	} else {
+		indicators = make([][]SafeFloat, sl, sl)
 	}
 
 	var indexLong, indexShort []int
 	var tr []*Trade
+
+	if !TE.GetInfo().CandlePnlSupport {
+		b.Parameters.PnlGraph = false
+	}
+	balance := parameters.Balance
+	var tempBalance float64
 
 	fmt.Println(len(ch))
 	for j := 0; j < len(ch)-1; j++ {
 		if l[j] {
 			for i := 0; i < min(len(indexShort), p); i++ {
 				index := indexShort[i]
-				t, err := TE.CreateTrade(SHORT, ch[index+1:], j-index, indicators[index], parameters.Balance, *parameters.Fee)
+				t, err := TE.CreateTrade(SHORT, ch[index+1:], j-index, indicators[index], balance, *parameters.Fee, b.Parameters.PnlGraph)
 				if err != nil {
 					fmt.Println("Create Shorts at", i, err)
 					continue
 				}
 				tr = append(tr, t)
+				if parameters.SizeType == size.Account {
+					tempBalance += t.RealisedPNL()
+				}
 			}
+			if parameters.SizeType == size.Account {
+				balance += tempBalance
+				tempBalance = 0
+			}
+
 			indexShort = indexShort[:0]
 			if parameters.Modus != OnlySHORT {
 				indexLong = append(indexLong, j)
@@ -118,13 +135,21 @@ func (bt *BackTest) CreateStrategy(name string, buy, sell ta.Condition, TE Trade
 		if s[j] {
 			for i := 0; i < min(len(indexLong), p); i++ {
 				index := indexLong[i]
-				t, err := TE.CreateTrade(LONG, ch[index+1:], j-index, indicators[index], parameters.Balance, *parameters.Fee)
+				t, err := TE.CreateTrade(LONG, ch[index+1:], j-index, indicators[index], balance, *parameters.Fee, b.Parameters.PnlGraph)
 				if err != nil {
 					fmt.Println("Create Longs at", i, err)
 					continue
 				}
 				tr = append(tr, t)
+				if parameters.SizeType == size.Account {
+					tempBalance += t.RealisedPNL()
+				}
 			}
+			if parameters.SizeType == size.Account {
+				balance += tempBalance
+				tempBalance = 0
+			}
+
 			indexLong = indexLong[:0]
 			if parameters.Modus != OnlyLONG {
 				indexShort = append(indexShort, j)
@@ -168,6 +193,27 @@ func (b *BackTestStrategy) Split(info string, op Filter) (*BackTestStrategy, *Ba
 
 			Parameters: b.Parameters,
 			Name:       b.Name + info + "false",
+			tr:         tf,
+		}
+}
+
+func (b *BackTestStrategy) LongsAndShorts() (*BackTestStrategy, *BackTestStrategy) {
+	var tt, tf []*Trade
+	for _, v := range b.tr {
+		if v.Side {
+			tt = append(tt, v)
+		} else {
+			tf = append(tf, v)
+		}
+	}
+	return &BackTestStrategy{
+			Name:       b.Name + "| longs",
+			Parameters: b.Parameters,
+			tr:         tt,
+		}, &BackTestStrategy{
+
+			Parameters: b.Parameters,
+			Name:       b.Name + "| shorts",
 			tr:         tf,
 		}
 }

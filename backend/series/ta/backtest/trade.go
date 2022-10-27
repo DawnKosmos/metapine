@@ -136,8 +136,6 @@ func (t *Trade) Close(price float64, slippage float64, close time.Time, feeType 
 			Time:  close,
 			Fee:   fee * t.NetSize * fprice,
 		}
-		//t.AvgSell = t.AvgSell*t.SellSize + f.Size*f.Price/(t.SellSize+f.Size)
-		//t.SellSize += t.BuySize
 	} else {
 		fprice := price + slippage
 		f = Fill{
@@ -148,18 +146,27 @@ func (t *Trade) Close(price float64, slippage float64, close time.Time, feeType 
 			Time:  close,
 			Fee:   fprice * fee * -t.NetSize,
 		}
-		//t.AvgBuy = (t.AvgBuy*t.BuySize + f.Size*f.Price) / (t.BuySize + f.Size)
-		//t.BuySize += -t.NetSize
+
 	}
 
 	t.CloseSignalTime = close
-	//t.NetSize = 0
 
 	t.Add(f)
 }
 
 func (t *Trade) Start() time.Time {
 	return t.EntrySignalTime
+}
+
+func (t *Trade) RealisedPNL() float64 {
+	var realisedPNL float64
+	if t.Side {
+		realisedPNL = (t.AvgSell - t.AvgBuy) * (t.BuySize - t.NetSize)
+	} else {
+		realisedPNL = -(t.AvgBuy - t.AvgSell) * (t.SellSize + t.NetSize)
+	}
+
+	return realisedPNL - t.Fee
 }
 
 // SimpleTrade Or SimpleTrade is used For FastBacktesting, this mode is used to iterate many parameters.

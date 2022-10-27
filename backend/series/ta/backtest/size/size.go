@@ -4,7 +4,6 @@ type SizeBase int
 
 const (
 	Dollar SizeBase = iota
-	Currency
 	Account
 )
 
@@ -33,8 +32,6 @@ func (s *Size) Amount(price float64) float64 {
 		return s.val / price
 	case Account:
 		return s.val
-	case Currency:
-		return s.val * price
 	}
 	return 1
 }

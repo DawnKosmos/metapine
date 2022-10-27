@@ -18,12 +18,14 @@ func (s *MarketMaker) CreateTrade(Side bool, ch []exchange.Candle, exitCandle in
 
 	t := newTrade(Side, ch[0].StartTime)
 
-	mp := ch[0].Open
+	//mp := ch[0].Open
 	if Side {
-		targetBuy := mp - mp*(s.Spread/100)
+		//	targetBuy := mp - mp*(s.Spread/100)
 		for i := 0; i < exitCandle; {
+
 		}
 	}
+	return t, nil
 
 }
 
@@ -35,7 +37,7 @@ func (s *MarketMaker) GetInfo() TEInfo {
 func mmdistrubution(mp, size, maxsize float64) [][2]float64 {
 	var as float64
 	for as > maxsize {
-		
-	}
 
+	}
+	return nil
 }
