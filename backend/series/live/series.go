@@ -1,27 +1,24 @@
 package live
 
 import (
-	"github.com/DawnKosmos/metapine/backend/series/ta"
+	"github.com/DawnKosmos/metapine/helper/data"
 )
 
 type Series interface {
-	Val(i int) float64 //Val(0) returns the actual value, Val(1) the last etc.
-	//ValArr(first, last int64) []float64 //ValArr returns an array of numbers ValArr(0,4) returns the latest 5 candles
-	Updater
+	Val(index int) float64 //Val(0) returns the actual value, Val(1) the last etc.
 	Data() []float64
-	ResolutionStartTime
+	Updater
 }
 
 type Condition interface {
-	Val(i int) bool //Val(0) returns the actual value, Val(1) the last etc.
-	//	ValArr(first, last int64) []bool //ValArr returns an array of numbers ValArr(0,4) returns the latest 5 candles
+	Val(index int) bool //Val(0) returns the actual value, Val(1) the last etc.
+	Data() []bool       //Needed for Initialisation
 	Updater
-	Data() []bool
-	ResolutionStartTime
 }
 
 type Updater interface {
-	Update(NewTick bool) //Updates the latest Tick, When Update(true) adds a Tick
+	ResolutionStartTime
+	OnTick(NewTick bool) //Updates the latest Tick, When Update(true) adds a Tick
 	SetLimit(i int)      //Sets the Limit that needs to be allocated for the indicator to work
 	ExecuteLimit()       //Gets called once
 	GetUpdateGroup() *UpdateGroup
@@ -32,14 +29,40 @@ type ResolutionStartTime interface {
 	Resolution() int64
 }
 
-type ERS struct {
-	ta ta.ResolutionStartTime //
+type URS[T any] struct {
+	st, res int64
+	data    data.Dater[T]
+	ug      *UpdateGroup
+	limit   int
+	recent  float64
 }
 
-func (e *ERS) StartTime() int64 {
-	return e.ta.StartTime()
+func (e *URS[T]) StartTime() int64 {
+	return e.st
 }
 
-func (e *ERS) Resolution() int64 {
-	return e.ta.Resolution()
+func (e *URS[T]) Resolution() int64 {
+	return e.res
+}
+
+func (e *URS[T]) Data() []T {
+	return e.data.Data()
+}
+
+func (e *URS[T]) Val(i int) T {
+	return e.data.V(i)
+}
+
+func (e *URS[T]) SetLimit(limit int) {
+	if limit > e.limit {
+		limit = e.limit
+	}
+}
+
+func (e *URS[T]) ExecuteLimit() {
+	e.data.SetLimit(e.limit)
+}
+
+func (e *URS[T]) GetUpdateGroup() *UpdateGroup {
+	return e.ug
 }

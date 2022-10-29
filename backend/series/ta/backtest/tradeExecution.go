@@ -52,7 +52,7 @@ func (s *ScaledLimit) CreateTrade(Side bool, ch []exchange.Candle, exitCandle in
 		return nil, errors.New("same candle")
 	}
 
-	t := newTrade(Side, ch[0].StartTime)
+	t := EmptyTrade(Side, ch[0].StartTime)
 	t.Indicator = indicators
 
 	var n, nMax int = 0, s.OrderCount
@@ -117,7 +117,7 @@ func (s *ScaledLimit) CreateTrade(Side bool, ch []exchange.Candle, exitCandle in
 	if len(t.Fills) == 0 {
 		return nil, errors.New("No trades got filled")
 	}
-	t.Close(ch[exitCandle].Open, fee.Slippage, ch[exitCandle].StartTime, MARKET, fee.Maker)
+	t.Close(ch[exitCandle].Open, fee.Slippage, ch[exitCandle].StartTime, MARKET, fee.Taker)
 	return t, nil
 }
 

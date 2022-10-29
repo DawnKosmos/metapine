@@ -27,7 +27,7 @@ func NewExpertProgramm(Name string, resolution int64) *UpdateGroup {
 	}
 }
 
-func (ug *UpdateGroup) AppendUpdater(u Updater) {
+func (ug *UpdateGroup) AddUpdater(u Updater) {
 	ug.ug = append(ug.ug, u)
 }
 
@@ -42,7 +42,7 @@ func (ug *UpdateGroup) Update() {
 			break
 		}
 		for _, v := range ug.ug {
-			v.Update(x)
+			v.OnTick(x)
 		}
 	}
 	close(ug.tick)
@@ -52,21 +52,6 @@ func (ug *UpdateGroup) Update() {
 func (ug *UpdateGroup) Exit() {
 	ug.exit = true
 	ug.tick <- true
-}
-
-type updater struct {
-	limit int
-	ug    *UpdateGroup
-}
-
-func (u *updater) SetLimit(i int) {
-	if i > u.limit {
-		u.limit = i
-	}
-}
-
-func (u *updater) GetUpdateGroup() *UpdateGroup {
-	return u.ug
 }
 
 /*

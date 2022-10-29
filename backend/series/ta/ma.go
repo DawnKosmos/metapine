@@ -26,7 +26,7 @@ func Sma(src Series, l int) Series {
 	alpha := 1 / float64(l)
 
 	for i := l; i < len(f); i++ {
-		avg = avg - f[i-l]*alpha + f[i]*alpha
+		avg = avg + (f[i]-f[i-l])*alpha
 		d = append(d, avg)
 	}
 	s.data = d

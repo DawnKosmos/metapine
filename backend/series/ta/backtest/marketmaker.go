@@ -16,7 +16,7 @@ func (s *MarketMaker) CreateTrade(Side bool, ch []exchange.Candle, exitCandle in
 		return nil, errors.New("same Candle")
 	}
 
-	t := newTrade(Side, ch[0].StartTime)
+	t := EmptyTrade(Side, ch[0].StartTime)
 
 	//mp := ch[0].Open
 	if Side {

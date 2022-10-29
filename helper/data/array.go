@@ -45,3 +45,7 @@ func (d *array[T]) SetLimit(limit int) {
 func (d *array[T]) SetValue(index int, val T) {
 	d.arr[len(d.arr)-1-index] = val
 }
+
+func (d *array[T]) Data() []T {
+	return d.arr
+}

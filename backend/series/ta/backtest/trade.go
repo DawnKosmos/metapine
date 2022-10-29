@@ -2,7 +2,6 @@ package backtest
 
 import (
 	"errors"
-	"fmt"
 	"github.com/DawnKosmos/metapine/backend/exchange"
 	"time"
 )
@@ -22,7 +21,7 @@ type Trade struct {
 	Fee       float64
 }
 
-func newTrade(Side bool, EntrySignalTime time.Time) *Trade {
+func EmptyTrade(Side bool, EntrySignalTime time.Time) *Trade {
 	return &Trade{
 		Side:            Side,
 		EntrySignalTime: EntrySignalTime,
@@ -32,23 +31,11 @@ func newTrade(Side bool, EntrySignalTime time.Time) *Trade {
 
 func NewTrade(f Fill) *Trade {
 	t := &Trade{
-		Side:  f.Side,
-		Fills: []Fill{f},
-		Fee:   f.Fee,
+		Side:            f.Side,
+		EntrySignalTime: f.Time,
+		Pnl:             []float64{},
 	}
-	t.avgPrice = f.Price
-
-	if f.Side {
-		t.AvgBuy = f.Price
-		t.BuySize = f.Size
-		t.NetSize = f.Size
-
-	} else {
-		t.AvgSell = f.Price
-		t.SellSize = f.Size
-		t.NetSize -= f.Size
-	}
-
+	t.Add(f)
 	return t
 }
 
@@ -61,7 +48,6 @@ func (t *Trade) PnlCalculation(c exchange.Candle) {
 		} else {
 			realisedPNL = -(t.AvgBuy - t.AvgSell) * (t.SellSize + t.NetSize)
 		}
-		fmt.Println(t.AvgBuy, t.AvgSell, t.avgPrice)
 	}
 
 	pnl := realisedPNL + (c.Close-t.avgPrice)*t.NetSize

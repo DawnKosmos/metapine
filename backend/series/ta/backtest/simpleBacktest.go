@@ -24,6 +24,10 @@ type BackTestStrategy struct {
 	tr         []*Trade
 }
 
+func (b *BackTestStrategy) Trades() []*Trade {
+	return b.tr
+}
+
 type BTParameter struct {
 	Modus      Mode
 	Pyramiding int
@@ -114,7 +118,7 @@ func (bt *BackTest) CreateStrategy(name string, buy, sell ta.Condition, TE Trade
 				index := indexShort[i]
 				t, err := TE.CreateTrade(SHORT, ch[index+1:], j-index, indicators[index], balance, *parameters.Fee, b.Parameters.PnlGraph)
 				if err != nil {
-					fmt.Println("Create Shorts at", i, err)
+					//fmt.Println("Create Shorts at", j, err)
 					continue
 				}
 				tr = append(tr, t)
@@ -137,7 +141,7 @@ func (bt *BackTest) CreateStrategy(name string, buy, sell ta.Condition, TE Trade
 				index := indexLong[i]
 				t, err := TE.CreateTrade(LONG, ch[index+1:], j-index, indicators[index], balance, *parameters.Fee, b.Parameters.PnlGraph)
 				if err != nil {
-					fmt.Println("Create Longs at", i, err)
+					//fmt.Println("Create Longs at", j, err)
 					continue
 				}
 				tr = append(tr, t)

@@ -5,4 +5,5 @@ type Dater[T any] interface {
 	SetLimit(limit int)
 	Append(v T)
 	SetValue(index int, val T)
+	Data() []T
 }

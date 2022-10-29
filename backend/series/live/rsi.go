@@ -7,32 +7,30 @@ import (
 )
 
 type rsi struct {
-	ERS
-	src Series
-	updater
+	URS[float64]
+	src        Series
 	alpha      float64
 	data       data.Dater[float64]
 	gain, loss float64
-
-	ta     ta.Series
-	recent float64
 }
 
-func Rsi(src Series, l int) Series {
+func Rsi(src Series, l int) *rsi {
 	r := new(rsi)
-	r.ug = src.GetUpdateGroup()
 	r.src = src
-	r.ug.AppendUpdater(r)
+	r.ug = src.GetUpdateGroup()
+	r.ug.AddUpdater(r)
+
+	//Init
 	rsi := ta.Rsi(src, l)
-	r.data = data.Array(r.ta.Data())
-	r.ta = rsi
+	r.st, r.res = rsi.StartTime(), rsi.Resolution()
+	src.SetLimit(3)
+	r.data = data.Array(rsi.Data())
 	r.gain, r.loss = rsi.Gain, rsi.Loss
-	r.limit = l
 	r.alpha = 1 / float64(l)
 	return r
 }
 
-func (r *rsi) Update(new bool) {
+func (r *rsi) OnTick(new bool) {
 	src0, src1 := r.src.Val(0), r.src.Val(1)
 
 	if new {
@@ -55,19 +53,6 @@ func (r *rsi) Update(new bool) {
 			r.data.SetValue(0, rsi)
 		}
 	}
-}
-
-func (r *rsi) ExecuteLimit() {
-	r.data.SetLimit(r.limit)
-	r.ta = nil
-}
-
-func (r *rsi) Data() []float64 {
-	return r.ta.Data()
-}
-
-func (r *rsi) Val(i int) float64 {
-	return r.data.V(i)
 }
 
 func gainLoss(old, new float64) (float64, float64) {
