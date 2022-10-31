@@ -18,6 +18,7 @@ func Highest(src Series, l int) Series {
 	s.res, s.st = src.Resolution(), src.StartTime()+src.Resolution()*int64(l)
 	f := src.Data()
 	d := make([]float64, 0, len(f)-l+1)
+	s.name = "Highest"
 	high, pos := formula.Highest(f[:l]...)
 	d = append(d, high)
 	for i := l; i < len(f); i++ {

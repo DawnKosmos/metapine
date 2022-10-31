@@ -16,6 +16,7 @@ type Condition interface {
 type ResolutionStartTime interface {
 	StartTime() int64
 	Resolution() int64
+	Name() string
 }
 
 // ERS implements the ErrorResolutionStartTime and can be implemented in a Series and Condition
@@ -23,6 +24,7 @@ type ERS[T any] struct {
 	st   int64
 	res  int64
 	data []T
+	name string
 }
 
 func (e *ERS[T]) StartTime() int64 {
@@ -35,4 +37,8 @@ func (e *ERS[T]) Resolution() int64 {
 
 func (e *ERS[T]) Data() []T {
 	return e.data
+}
+
+func (e *ERS[T]) Name() string {
+	return e.name
 }

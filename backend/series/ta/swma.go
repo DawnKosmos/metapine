@@ -9,6 +9,7 @@ func Swma(src Series) Series {
 	s.st = src.StartTime() + src.Resolution()*4
 	s.res = src.Resolution()
 
+	s.name = "SWMA"
 	f := src.Data()
 	d := make([]float64, 0, len(f))
 	x3, x2, x1, x0 := 1/6*f[0], 2/6*f[1], 2/6*f[2], 1/6*f[3]

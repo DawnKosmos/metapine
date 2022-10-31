@@ -1,6 +1,7 @@
 package ta
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/DawnKosmos/metapine/helper/formula"
@@ -21,6 +22,7 @@ func Rsi(src Series, l int) *RSI {
 	f := src.Data()
 	r.data = make([]float64, 0, len(f)-l)
 
+	r.name = fmt.Sprintf("RSI")
 	gain, loss := avgGainLoss(f)
 	avgGain, avgLoss := formula.Average(gain[:l]...), formula.Average(loss[:l]...)
 	rs := avgGain / avgLoss

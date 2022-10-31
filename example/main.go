@@ -2,45 +2,50 @@ package main
 
 import (
 	"fmt"
-	"github.com/DawnKosmos/metapine/backend/exchange/ftx"
 	"github.com/DawnKosmos/metapine/backend/exchange/psql"
 	"github.com/DawnKosmos/metapine/backend/series/ta"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest"
+	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/distribution"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/size"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/tradeexecution"
 	"os"
 	"time"
 )
 
+/*
+TODO
+Seperate PSQL and DB logic
+CreateInterface for differentBacktestingOperations change parameters to string
+Add Enviroments to Iterators
+Think of filtering
+
+Visual representation
+*/
+
 func main() {
 
 	psql.SetPSQL("localhost", "postgres", "metapine", "admin", 5432)
 
-	exch := ftx.New()
+	exch, _ := psql.New("ftx")
 
-	ch := ta.NewOHCLV(exch, "ETH-perp", time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC), time.Date(2022, 10, 29, 0, 0, 0, 0, time.UTC), 3600*24)
+	ch := ta.NewOHCLV(exch, "BTC-PERP", time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC), time.Date(2022, 10, 29, 0, 0, 0, 0, time.UTC), 3600*12)
 	if len(ch.Data()) == 0 {
 		os.Exit(1)
 	}
-
-	oc2 := ta.OC2(ch)
-	//hl2 := ta.HL2(ch)
-	//vol := ta.Volume(ch)
-
-	buy, sell := solape(oc2, nil, 5, 9)
+	open := ta.Open(ch)
+	buy, sell := ta.Ribbon(open, open, ta.Sma, 36, 42)
 
 	strat := backtest.NewStrategy(ch)
 
-	te := []backtest.TradeExecution{tradeexecution.NewMarketOrder(1)}
-
-	for _, v := range te {
-		bb := strat.CreateStrategy("Saphir", buy, sell, v, backtest.BTParameter{
+	for i := 2; i < 10; i++ {
+		te := tradeexecution.NewScaledLimit(0, float64(i), 10).Distribution(distribution.Exponential).Size(1.5)
+		bb := strat.CreateStrategy("Ribbon", buy, sell, te, backtest.BTParameter{
 			Modus:      backtest.ALL,
 			Pyramiding: 1,
 			Fee: &backtest.FeeInfo{
-				Maker:    0.00000,
-				Taker:    0.0000,
-				Slippage: 0,
+				Maker:    -0.00005,
+				Taker:    0.0005,
+				Slippage: 1,
 			},
 			Balance:  10000,
 			SizeType: size.Dollar,
@@ -48,19 +53,20 @@ func main() {
 		})
 
 		var lPnl, sPnl float64
+		var totalVolume float64
 		for _, v := range bb.Trades() {
 			if v.Side {
 				lPnl += v.RealisedPNL()
-				fmt.Println(v.Side, v.EntrySignalTime.Format("02/Jan/06"), v.CloseSignalTime.Format("02/Jan/06"), v.AvgBuy, v.AvgSell, v.UsdVolume/2, v.RealisedPNL())
+				//fmt.Println(v.Side, v.EntrySignalTime.Format("02/Jan/06"), v.CloseSignalTime.Format("02/Jan/06"), v.AvgBuy, v.AvgSell, v.UsdVolume/2, v.RealisedPNL())
 			} else {
 				//fmt.Println(v.Side, v.EntrySignalTime.Format("02/Jan/06"), v.CloseSignalTime.Format("02/Jan/06"), v.AvgSell, v.AvgBuy, v.UsdVolume/2, v.RealisedPNL())
 
 				sPnl += v.RealisedPNL()
 			}
+			totalVolume += v.UsdVolume / 2
 		}
-		fmt.Println(fmt.Sprintf("%d \t %.2f \t %2.f", len(bb.Trades()), lPnl, sPnl))
+		fmt.Println(fmt.Sprintf("%d, %d \t %.2f \t %2.f \t%2.f", i, len(bb.Trades()), lPnl, sPnl, totalVolume))
 	}
-
 }
 
 func solape(oc2 ta.Series, volume ta.Series, len1, len2 int) (ta.Condition, ta.Condition) {

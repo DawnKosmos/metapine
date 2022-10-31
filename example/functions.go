@@ -2,7 +2,7 @@ package main
 
 import . "github.com/DawnKosmos/metapine/backend/series/ta"
 
-func Saphir(src1 Series, src2 Series, volume Series, len1, len2, len3 int) (buy Condition, sell Condition) {
+func Saphir(src1 Series, src2 Series, volume Series, len1, len2 int) (buy Condition, sell Condition) {
 	outR1 := Sma(Rsi(src1, len1), 2)
 	outR2 := Sma(Rsi(src2, len1), 2)
 	outR := Div(AddF(outR2, outR1, 2), 3)
@@ -20,20 +20,47 @@ func Saphir(src1 Series, src2 Series, volume Series, len1, len2, len3 int) (buy 
 	return
 }
 
-/*
-maR = input(title="SMI 1", defval=12)
-ma1 = input(title="SMI  2", defval=4)
-outR1 = sma(rsi(haOpen + haClose, maR), 2)
-outR2 = sma(rsi(hahaHigh+hahaLow,maR),2)
-outR = (2*outR2+outR1)/3
-outB1 = sma(outR, ma1)
-outB2 = sma(outB1, ma1)
-outB = 2 * outB1 - 1 * outB2
-loa = input(2)
-cc = outR - outB
-vwma_1 = (cc*haVolume*loa+cc[1]*haVolume[1])/(haVolume*loa+haVolume[1])
-sma_1 = sma(cc, 2)
-ccc = useVol ? vwma_1 : sma_1
-c1 = ccc > ccc[1] and ccc[1] < ccc[2]
-c2 = ccc < ccc[1] and ccc[1] > ccc[2]
-*/
+func dai(open, high, low, close, volume Series, l1, l2 int) Series {
+	sh := Vwma(Sum(Add(high, close), l1), volume, l2)
+	lo := Vwma(Sum(Sub(close, low), l1), volume, l2)
+	return Div(Sub(lo, sh), sh)
+}
+
+func longCon(prozent float64, len int, close Series, low Series) Condition {
+	lowest := Lowest(low, len)
+	r1 := Sub(Div(close, lowest), 1)
+	return Greater(r1, prozent/100)
+}
+
+func shortCon(prozent float64, len int, close, high Series) Condition {
+	highest := Highest(high, len)
+	r1 := Sub(Div(close, highest), 1)
+	return Smaller(r1, -prozent/100)
+}
+
+func saphir(src1, src2, volume Series, l1, l2 int) (saphir Series) {
+	r1 := Sma(Rsi(src1, l1), 2) //
+	r2 := Sma(Rsi(src2, l2), 2)
+	r := AddF(r1, r2, 2)
+	b1 := Sma(r, l2)
+	b2 := Sma(b1, l2)
+	b := SubF(b1, b2, 2)
+	cc := Sub(r, b)
+	if volume == nil {
+		saphir = Sma(cc, 2)
+	} else {
+		cc1, volume1 := OffS(cc, 1), OffS(volume, 1)
+		vwma1 := Add((MultF(cc, volume, 2)), Mult(cc1, volume1))
+		saphir = Div(vwma1, Add(Mult(volume, 2), volume1))
+	}
+	return
+}
+
+func MaCross(maFast func(s1 Series, len int) Series, maSlow func(s1 Series, len int) Series, src Series, fast int, slow int) (buy Condition, sell Condition) {
+	fastMa := maFast(src, fast)
+	slowMa := maSlow(src, slow)
+
+	buy = Crossover(fastMa, slowMa)
+	sell = Crossunder(fastMa, slowMa)
+	return
+}

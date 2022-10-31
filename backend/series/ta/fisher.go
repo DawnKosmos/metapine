@@ -39,6 +39,7 @@ func Fisher(src Series, l int) Series {
 	fish := fishCalc(fishCalc2(value1), 0)
 	d = append(d, fish)
 
+	s.name = "Fisher"
 	for i, v := range f[l:] {
 		value1 = fishCalc1(v, low[i], high[i], value1)
 		fish = fishCalc(fishCalc2(value1), fish)

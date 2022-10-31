@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"sort"
 	"time"
 
 	"github.com/DawnKosmos/metapine/backend/exchange"
@@ -96,7 +97,7 @@ func (f *FastBacktest) AddStrategy(buy ta.Condition, sell ta.Condition, paras ..
 				trades = append(trades, t)
 			}
 			tempOrderShort = tempOrderShort[:0]
-			if f.modus == OnlySHORT {
+			if f.modus != OnlySHORT {
 				tempOrderLong = append(tempOrderLong, ch[j])
 			}
 		}
@@ -110,7 +111,7 @@ func (f *FastBacktest) AddStrategy(buy ta.Condition, sell ta.Condition, paras ..
 				trades = append(trades, t)
 			}
 			tempOrderLong = tempOrderLong[:0]
-			if f.modus == OnlyLONG {
+			if f.modus != OnlyLONG {
 				tempOrderLong = append(tempOrderShort, ch[j])
 			}
 		}
@@ -124,7 +125,7 @@ type FastBacktestResult struct {
 	winrate     float64
 	pnl         float64
 	avgWin      float64
-	totalTrades int
+	TotalTrades int
 	less        func(f *FastBacktestResult) float64
 }
 
@@ -146,14 +147,16 @@ func newFastBacktestResult(tr []SimpleTrade, fee float64, less func(f *FastBackt
 		winrate:     float64(wins) / float64(len(tr)),
 		pnl:         pnl,
 		avgWin:      math.Pow(pnl, 1.0/float64(len(tr))),
-		totalTrades: len(tr),
+		TotalTrades: len(tr),
 		less:        less,
 	}
 }
 
 func (p *FastBacktestResult) Print(w io.Writer) {
-	//TODO
-	panic("TODO")
+	for _, v := range p.parameters {
+		w.Write([]byte(fmt.Sprintf("%v \t", v)))
+	}
+	w.Write([]byte(fmt.Sprintf("\n%d", p.TotalTrades, p.winrate, p.pnl, p.avgWin)))
 }
 
 // Sorting Algo
@@ -178,3 +181,19 @@ type FastBacktestResults []FastBacktestResult
 func (a FastBacktestResults) Len() int           { return len(a) }
 func (a FastBacktestResults) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a FastBacktestResults) Less(i, j int) bool { return a[i].less(&a[i]) < a[j].less(&a[j]) }
+
+func (f *FastBacktest) Write(p []byte) (int, error) {
+	return fmt.Print(string(p))
+}
+
+func (f *FastBacktest) PrintResult() {
+	sort.Sort(FastBacktestResults(f.results))
+
+	for _, v := range f.results {
+		v.Print(f)
+	}
+}
+
+func (f *FastBacktest) ReturnResults() []FastBacktestResult {
+	return f.results
+}

@@ -1,7 +1,6 @@
 package backtest
 
 import (
-	"fmt"
 	"github.com/DawnKosmos/metapine/backend/series/ta"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/size"
 	"github.com/DawnKosmos/metapine/helper/formula"
@@ -111,7 +110,6 @@ func (bt *BackTest) CreateStrategy(name string, buy, sell ta.Condition, TE Trade
 	balance := parameters.Balance
 	var tempBalance float64
 
-	fmt.Println(len(ch))
 	for j := 0; j < len(ch)-1; j++ {
 		if l[j] {
 			for i := 0; i < min(len(indexShort), p); i++ {
