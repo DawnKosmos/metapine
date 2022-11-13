@@ -2,30 +2,23 @@ package backtest
 
 import (
 	"github.com/DawnKosmos/metapine/backend/series/ta"
+	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/mode"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/size"
 )
 
 const LONG = true
 const SHORT = false
 
-type Mode int
-
-const (
-	OnlySHORT Mode = -1
-	ALL            = 0
-	OnlyLONG       = 1
-)
-
-type FeeInfo struct {
+type Fee struct {
 	Maker    float64
 	Taker    float64
 	Slippage float64
 }
 
 type BacktestParameters struct {
-	Modus      Mode
+	Modus      mode.Mode
 	Pyramiding int
-	Fee        *FeeInfo
+	Fee        *Fee
 	Size       *size.Size
 }
 
@@ -53,3 +46,30 @@ func min(a, b int) int {
 	}
 	return a
 }
+
+type Parameter struct {
+	Modus      mode.Mode
+	Pyramiding int
+	Fee        *Fee
+	Balance    float64
+	SizeType   size.SizeBase
+	PnlGraph   bool
+}
+
+type Backtester interface {
+	AddStrategy(buy, sell ta.Condition, parameters string)
+	Split(condition string, op Filter)
+	Filter(condition string, op Filter)
+}
+
+/*
+BTParameter, TradeExecution
+
+NewFastBackTest -> FastBacktest
+	bt.AddStrategy(buy,sell)
+NewStrategy -> Backtest
+	bt.CreateStrategy("name", buy, sell, TE, parameters BTParameter
+NewMultiTicker -> MultiTicker
+	bt.CreateResult(tickers []string, ee exchange.CandleProvider, st, et,res)
+
+*/

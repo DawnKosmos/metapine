@@ -23,7 +23,7 @@ func (m *Market) Stop(long, short ta.Series) *Market {
 	return m
 }
 
-func (m *Market) CreateTrade(Side bool, ch []exchange.Candle, exitCandle int, indicators []backtest.SafeFloat, sizeInUsd float64, fee backtest.FeeInfo, pnlgraph bool) (*backtest.Trade, error) {
+func (m *Market) CreateTrade(Side bool, ch []exchange.Candle, exitCandle int, indicators []backtest.SafeFloat, sizeInUsd float64, fee backtest.Fee, pnlgraph bool) (*backtest.Trade, error) {
 	if exitCandle == 0 {
 		return nil, errors.New("same candle")
 	}

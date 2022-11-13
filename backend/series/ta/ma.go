@@ -64,7 +64,7 @@ type RMA struct {
 	Avg float64
 }
 
-func Rma(src Series, l int) *RMA {
+func Rma(src Series, l int) Series {
 	if l < 2 {
 		log.Panicln("rma invalid len", l)
 	}

@@ -161,6 +161,7 @@ type SimpleTrade struct {
 	Side                bool
 	Entry, Exit         float64
 	EntryTime, ExitTime int64
+	indicators          []float64
 }
 
 func CreateSimpleTrade(side bool, entry, exit exchange.Candle) (SimpleTrade, error) {
@@ -181,7 +182,7 @@ func (t *SimpleTrade) Pnl(fee float64) float64 {
 	} else {
 		x = -1 * (t.Exit - t.Entry) / t.Entry
 	}
-	return x - (fee * 0.01)
+	return 1 + x - (fee * x)
 }
 
 // TRADES

@@ -33,7 +33,7 @@ func NewScaledLimit(min float64, max float64, OrderCount int) *ScaledLimit {
 	}
 }
 
-func (s *ScaledLimit) CreateTrade(Side bool, ch []exchange.Candle, exitCandle int, indicators []SafeFloat, sizeInUsd float64, fee FeeInfo, pnlgraph bool) (*Trade, error) {
+func (s *ScaledLimit) CreateTrade(Side bool, ch []exchange.Candle, exitCandle int, indicators []SafeFloat, sizeInUsd float64, fee Fee, pnlgraph bool) (*Trade, error) {
 	if exitCandle == 0 {
 		return nil, errors.New("same candle")
 	}

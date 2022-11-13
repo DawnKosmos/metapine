@@ -2,9 +2,8 @@ package backtest
 
 import (
 	"fmt"
-	"io"
+	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/mode"
 	"math"
-	"sort"
 	"time"
 
 	"github.com/DawnKosmos/metapine/backend/exchange"
@@ -19,17 +18,21 @@ import (
 type FastBacktest struct {
 	ch         ta.Chart
 	pyramiding int
-	modus      Mode
+	modus      mode.Mode
 	st, et     int64
 	cutEt      int
 	res        int64
 	fee        float64
+	Indicators [][]SafeFloat
 	P          []string
 	results    []FastBacktestResult
 	less       func(f *FastBacktestResult) float64
 }
 
-func InitFastBackTest(ch ta.Chart, mode Mode, pyramiding int, fee float64, st int64, et int64, parameter []string) *FastBacktest { //st, et -1 means trading whole data
+/*
+NewFastBackTest should be used if you are iterating with a lot different parameters. It is not as detailed as a n ordinary backtest but it does its job.
+*/
+func NewFastBackTest(ch ta.Chart, mode mode.Mode, pyramiding int, fee float64, st int64, et int64, parameter []string) *FastBacktest { //st, et -1 means trading whole Data
 	var p int = 1
 	if pyramiding > 1 {
 		p = pyramiding
@@ -60,7 +63,45 @@ func InitFastBackTest(ch ta.Chart, mode Mode, pyramiding int, fee float64, st in
 	}
 }
 
-func (f *FastBacktest) AddStrategy(buy ta.Condition, sell ta.Condition, paras ...interface{}) {
+func (bt *FastBacktest) AddIndicator(indicators ...ta.Series) *FastBacktest {
+	if len(indicators) == 0 {
+		return bt
+	}
+
+	d := bt.ch.Data()
+	indi := make([][]SafeFloat, len(d), len(d))
+	f := indicators[0].Data()
+	l1 := len(indicators)
+
+	for i := 0; i < len(d)-len(f); i++ {
+		init := make([]SafeFloat, l1, l1)
+		indi = append(indi, init)
+	}
+
+	var j int = len(d) - len(f)
+	for _, v := range f {
+		init := make([]SafeFloat, l1, l1)
+		init[0] = SafeFloat{Safe: true, Value: v}
+		indi[j] = init
+		j++
+	}
+
+	for _, vv := range indicators[1:] {
+		var i int = 1
+		f = vv.Data()
+		j = len(d) - len(f)
+		for _, v := range f {
+			indi[j][i] = SafeFloat{Safe: true, Value: v}
+			j++
+		}
+		i++
+	}
+	bt.Indicators = indi
+	return bt
+}
+
+// Backtester Interface
+func (f *FastBacktest) AddStrategy(buy ta.Condition, sell ta.Condition, paras string) {
 	//Init
 	ch, l, s := f.ch.Data(), buy.Data(), sell.Data()
 	sl, pos := formula.MinInt(len(ch), len(l), len(s))
@@ -97,7 +138,7 @@ func (f *FastBacktest) AddStrategy(buy ta.Condition, sell ta.Condition, paras ..
 				trades = append(trades, t)
 			}
 			tempOrderShort = tempOrderShort[:0]
-			if f.modus != OnlySHORT {
+			if f.modus != mode.OnlySHORT {
 				tempOrderLong = append(tempOrderLong, ch[j])
 			}
 		}
@@ -111,7 +152,7 @@ func (f *FastBacktest) AddStrategy(buy ta.Condition, sell ta.Condition, paras ..
 				trades = append(trades, t)
 			}
 			tempOrderLong = tempOrderLong[:0]
-			if f.modus != OnlyLONG {
+			if f.modus != mode.OnlyLONG {
 				tempOrderLong = append(tempOrderShort, ch[j])
 			}
 		}
@@ -121,7 +162,7 @@ func (f *FastBacktest) AddStrategy(buy ta.Condition, sell ta.Condition, paras ..
 }
 
 type FastBacktestResult struct {
-	parameters  []interface{}
+	name        string
 	winrate     float64
 	pnl         float64
 	avgWin      float64
@@ -129,7 +170,7 @@ type FastBacktestResult struct {
 	less        func(f *FastBacktestResult) float64
 }
 
-func newFastBacktestResult(tr []SimpleTrade, fee float64, less func(f *FastBacktestResult) float64, paras ...interface{}) FastBacktestResult {
+func newFastBacktestResult(tr []SimpleTrade, fee float64, less func(f *FastBacktestResult) float64, paras string) FastBacktestResult {
 	gains := make([]float64, 0, len(tr))
 	var wins int
 	var pnl float64 = 1
@@ -139,11 +180,13 @@ func newFastBacktestResult(tr []SimpleTrade, fee float64, less func(f *FastBackt
 		if gains[i] > 1 {
 			wins++
 			pnl *= gains[i]
+		} else {
+			pnl *= gains[i]
 		}
 	}
 
 	return FastBacktestResult{
-		parameters:  paras,
+		name:        paras,
 		winrate:     float64(wins) / float64(len(tr)),
 		pnl:         pnl,
 		avgWin:      math.Pow(pnl, 1.0/float64(len(tr))),
@@ -152,11 +195,8 @@ func newFastBacktestResult(tr []SimpleTrade, fee float64, less func(f *FastBackt
 	}
 }
 
-func (p *FastBacktestResult) Print(w io.Writer) {
-	for _, v := range p.parameters {
-		w.Write([]byte(fmt.Sprintf("%v \t", v)))
-	}
-	w.Write([]byte(fmt.Sprintf("\n%d", p.TotalTrades, p.winrate, p.pnl, p.avgWin)))
+func (p *FastBacktestResult) Print() {
+	fmt.Println(fmt.Sprintf("%d %.2f, %.2f, %.2f", p.TotalTrades, p.winrate, p.pnl, p.avgWin))
 }
 
 // Sorting Algo
@@ -184,14 +224,6 @@ func (a FastBacktestResults) Less(i, j int) bool { return a[i].less(&a[i]) < a[j
 
 func (f *FastBacktest) Write(p []byte) (int, error) {
 	return fmt.Print(string(p))
-}
-
-func (f *FastBacktest) PrintResult() {
-	sort.Sort(FastBacktestResults(f.results))
-
-	for _, v := range f.results {
-		v.Print(f)
-	}
 }
 
 func (f *FastBacktest) ReturnResults() []FastBacktestResult {

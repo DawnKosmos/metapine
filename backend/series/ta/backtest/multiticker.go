@@ -1,9 +1,7 @@
 package backtest
 
 import (
-	"github.com/DawnKosmos/metapine/backend/exchange"
 	"github.com/DawnKosmos/metapine/backend/series/ta"
-	"time"
 )
 
 type MultiTicker struct {
@@ -11,10 +9,10 @@ type MultiTicker struct {
 	Algo       func(ch ta.Chart) (buy ta.Condition, sell ta.Condition)
 	TE         TradeExecution
 	Indicator  []func(ch ta.Chart) ta.Series
-	Parameters BTParameter
+	Parameters Parameter
 }
 
-func NewMultiTicker(Name string, Algo func(ch ta.Chart) (ta.Condition, ta.Condition), te TradeExecution, parameters BTParameter) *MultiTicker {
+func NewMultiTicker(Name string, Algo func(ch ta.Chart) (ta.Condition, ta.Condition), te TradeExecution, parameters Parameter) *MultiTicker {
 	return &MultiTicker{
 		Name:       Name,
 		Algo:       Algo,
@@ -27,6 +25,7 @@ func (s *MultiTicker) AddIndicator(indicator ...func(ch ta.Chart) ta.Series) {
 	s.Indicator = indicator
 }
 
+/*
 func (s *MultiTicker) CreateResult(tickers []string, ee exchange.CandleProvider, st, et time.Time, res int64) []*BackTestStrategy {
 	var bb []*BackTestStrategy
 	for _, v := range tickers {
@@ -42,3 +41,4 @@ func (s *MultiTicker) CreateResult(tickers []string, ee exchange.CandleProvider,
 	}
 	return bb
 }
+*/

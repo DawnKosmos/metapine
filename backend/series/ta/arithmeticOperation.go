@@ -1,9 +1,9 @@
 package ta
 
 import (
+	"github.com/DawnKosmos/metapine/helper/formula"
 	"log"
 	"math"
-	"github.com/DawnKosmos/metapine/helper/formula"
 )
 
 type arit struct {
@@ -13,6 +13,7 @@ type arit struct {
 func Arit(op func(float64, float64) float64, src Series, v interface{}) Series {
 	s := new(arit)
 	s.res = src.Resolution()
+	s.name = "AritOp" + src.Name()
 	var d []float64
 	switch v := v.(type) {
 	case float64:
@@ -47,7 +48,7 @@ func Arit(op func(float64, float64) float64, src Series, v interface{}) Series {
 	return s
 }
 
-//Abs return the Absolute of its interface{
+// Abs return the Absolute of its interface{
 func Abs(src Series) Series {
 	o := func(v1 float64, _ float64) float64 {
 		return math.Abs(v1)
@@ -55,7 +56,7 @@ func Abs(src Series) Series {
 	return Arit(o, src, 0)
 }
 
-//Add (a,b) => a + b
+// Add (a,b) => a + b
 func Add(src Series, v interface{}) Series {
 	o := func(v1 float64, v2 float64) float64 {
 		return v1 + v2
@@ -63,7 +64,7 @@ func Add(src Series, v interface{}) Series {
 	return Arit(o, src, v)
 }
 
-//Mult (a,b) => a*b
+// Mult (a,b) => a*b
 func Mult(src Series, v interface{}) Series {
 	o := func(v1 float64, v2 float64) float64 {
 		return v1 * v2
@@ -71,7 +72,7 @@ func Mult(src Series, v interface{}) Series {
 	return Arit(o, src, v)
 }
 
-//Sub (src,v) => src - v
+// Sub (src,v) => src - v
 func Sub(src interface{}, v interface{}) Series {
 	s, ok := src.(Series)
 
@@ -109,7 +110,7 @@ func Sub(src interface{}, v interface{}) Series {
 
 }
 
-//Div (src,v) => src/v
+// Div (src,v) => src/v
 func Div(src Series, v interface{}) Series {
 	o := func(v1 float64, v2 float64) float64 {
 		if v2 == 0 {
@@ -121,19 +122,19 @@ func Div(src Series, v interface{}) Series {
 	return Arit(o, src, v)
 }
 
-//Mod (src,v) => src%v
+// Mod (src,v) => src%v
 func Mod(src Series, v interface{}) Series {
 	o := math.Mod
 	return Arit(o, src, v)
 }
 
-//Pow (src,v) => src^v
+// Pow (src,v) => src^v
 func Pow(src Series, v interface{}) Series {
 	o := math.Pow
 	return Arit(o, src, v)
 }
 
-//Round (src) => round(src)
+// Round (src) => round(src)
 func Round(src Series) Series {
 	o := func(v1 float64, _ float64) float64 {
 		return math.Round(v1)
@@ -141,7 +142,7 @@ func Round(src Series) Series {
 	return Arit(o, src, 0.0)
 }
 
-//Min (src,v) => min(src,v)
+// Min (src,v) => min(src,v)
 func Min(src Series, v interface{}) Series {
 	o := math.Min /*func(v1 float64, v2 float64) float64 {
 		return math.Min(v1, v2)
@@ -149,25 +150,25 @@ func Min(src Series, v interface{}) Series {
 	return Arit(o, src, v)
 }
 
-//Max (src,v) => max(src,v)
+// Max (src,v) => max(src,v)
 func Max(src Series, v interface{}) Series {
 	o := math.Max
 	return Arit(o, src, v)
 }
 
-//Remainder (src,v) => return remainder of src/v
+// Remainder (src,v) => return remainder of src/v
 func Remainder(src Series, v interface{}) Series {
 	o := math.Remainder
 	return Arit(o, src, v)
 }
 
-//Hypot (src, v) => sqrt(src²+v²)
+// Hypot (src, v) => sqrt(src²+v²)
 func Hypot(src Series, v interface{}) Series {
 	o := math.Hypot
 	return Arit(o, src, v)
 }
 
-//AddF (src, v, factor) => src*factor + v
+// AddF (src, v, factor) => src*factor + v
 func AddF(src Series, v interface{}, factor float64) Series {
 	o := func(v1 float64, v2 float64) float64 {
 		return v1*factor + v2
@@ -175,7 +176,7 @@ func AddF(src Series, v interface{}, factor float64) Series {
 	return Arit(o, src, v)
 }
 
-//SubF (src,v,factor) => src*factor - v
+// SubF (src,v,factor) => src*factor - v
 func SubF(src Series, v interface{}, factor float64) Series {
 	o := func(v1 float64, v2 float64) float64 {
 		return v1*factor - v2
@@ -183,7 +184,7 @@ func SubF(src Series, v interface{}, factor float64) Series {
 	return Arit(o, src, v)
 }
 
-//MultF (src,v,factor) => src*factor * v
+// MultF (src,v,factor) => src*factor * v
 func MultF(src Series, v interface{}, factor float64) Series {
 	o := func(v1 float64, v2 float64) float64 {
 		return v1 * factor * v2
@@ -191,7 +192,7 @@ func MultF(src Series, v interface{}, factor float64) Series {
 	return Arit(o, src, v)
 }
 
-//DivF (src,v,factor) => src*factor/v
+// DivF (src,v,factor) => src*factor/v
 func DivF(src Series, v interface{}, factor float64) Series {
 	o := func(v1 float64, v2 float64) float64 {
 		return v1 * factor / v2
@@ -199,7 +200,7 @@ func DivF(src Series, v interface{}, factor float64) Series {
 	return Arit(o, src, v)
 }
 
-//AddC (src,v,constant) => src+v+constant
+// AddC (src,v,constant) => src+v+constant
 func AddC(src Series, v interface{}, constant float64) Series {
 	o := func(v1 float64, v2 float64) float64 {
 		return v1 + v2 + constant
@@ -207,7 +208,7 @@ func AddC(src Series, v interface{}, constant float64) Series {
 	return Arit(o, src, v)
 }
 
-//SubC (src,v,constant) => src-v+constant
+// SubC (src,v,constant) => src-v+constant
 func SubC(src Series, v interface{}, constant float64) Series {
 	o := func(v1 float64, v2 float64) float64 {
 		return v1 - v2 + constant
@@ -215,7 +216,7 @@ func SubC(src Series, v interface{}, constant float64) Series {
 	return Arit(o, src, v)
 }
 
-//DivC (src,v,constant) => src/v+constant
+// DivC (src,v,constant) => src/v+constant
 func DivC(src Series, v interface{}, constant float64) Series {
 	o := func(v1 float64, v2 float64) float64 {
 		return v1/v2 + constant
@@ -223,7 +224,7 @@ func DivC(src Series, v interface{}, constant float64) Series {
 	return Arit(o, src, v)
 }
 
-//MultC (src,v,constant) => src*v+constant
+// MultC (src,v,constant) => src*v+constant
 func MultC(src Series, v interface{}, constant float64) Series {
 	o := func(v1 float64, v2 float64) float64 {
 		return v1*v2 + constant
@@ -231,7 +232,7 @@ func MultC(src Series, v interface{}, constant float64) Series {
 	return Arit(o, src, v)
 }
 
-//Sqrt (src) => sqrt(src)
+// Sqrt (src) => sqrt(src)
 func Sqrt(src Series) Series {
 	o := func(v1, v2 float64) float64 {
 		return math.Sqrt(v1)
@@ -239,7 +240,7 @@ func Sqrt(src Series) Series {
 	return Arit(o, src, 0)
 }
 
-//Neg(src) = -src
+// Neg(src) = -src
 func Neg(src Series) Series {
 	o := func(v1, _ float64) float64 {
 		return -v1
@@ -247,7 +248,7 @@ func Neg(src Series) Series {
 	return Arit(o, src, 0)
 }
 
-//Log returns the natural logarithm
+// Log returns the natural logarithm
 func Log(src Series) Series {
 	o := func(v1, _ float64) float64 {
 		return math.Log(v1)
@@ -255,7 +256,7 @@ func Log(src Series) Series {
 	return Arit(o, src, 0)
 }
 
-//Sin (src) => sin(src)
+// Sin (src) => sin(src)
 func Sin(src Series) Series {
 	o := func(v1, v2 float64) float64 {
 		return math.Sin(v1)
@@ -263,7 +264,7 @@ func Sin(src Series) Series {
 	return Arit(o, src, 0)
 }
 
-//Cos returns the Cos
+// Cos returns the Cos
 func Cos(src Series) Series {
 	o := func(v1, v2 float64) float64 {
 		return math.Cos(v1)
@@ -271,7 +272,7 @@ func Cos(src Series) Series {
 	return Arit(o, src, 0)
 }
 
-//Asin return the asin
+// Asin return the asin
 func Asin(src Series) Series {
 	o := func(v1, v2 float64) float64 {
 		return math.Asin(v1)
@@ -279,7 +280,7 @@ func Asin(src Series) Series {
 	return Arit(o, src, 0)
 }
 
-//Acos return the acos
+// Acos return the acos
 func Acos(src Series) Series {
 	o := func(v1, _ float64) float64 {
 		return math.Acos(v1)
@@ -287,7 +288,7 @@ func Acos(src Series) Series {
 	return Arit(o, src, 0)
 }
 
-//Floor rounds a float number to the lower or equal integer
+// Floor rounds a float number to the lower or equal integer
 func Floor(src Series) Series {
 	o := func(v1, _ float64) float64 {
 		return math.Floor(v1)
@@ -295,13 +296,13 @@ func Floor(src Series) Series {
 	return Arit(o, src, 0)
 }
 
-//The Change between the older and newer value
+// The Change between the older and newer value
 func Change(src Series, len int) Series {
 	srcOffset := OffS(src, len)
 	return Arit(formula.Change[float64], srcOffset, src)
 }
 
-//Invert(src) => 1/src
+// Invert(src) => 1/src
 func Invert(src Series) Series {
 	o := func(v1, _ float64) float64 {
 		return 1 / v1

@@ -9,7 +9,6 @@ import (
 type Chart interface {
 	Data() []exchange.Candle
 	ResolutionStartTime
-	Name() string
 }
 
 type OHCLV struct {
@@ -23,9 +22,17 @@ func NewOHCLV(e exchange.CandleProvider, ticker string, start time.Time, end tim
 	o := new(OHCLV)
 	o.res = resolution
 	o.name = ticker
-	o.ch, _ = e.OHCLV(ticker, resolution, start, end)
+	var err error
+	o.ch, err = e.OHCLV(ticker, resolution, start, end)
+	if err != nil {
+		panic(err)
+	}
 	o.st = o.ch[0].StartTime.Unix()
 	return o
+}
+
+func (o *OHCLV) SetName(name string) {
+	o.name = name
 }
 
 func (o *OHCLV) Data() []exchange.Candle {
@@ -58,10 +65,10 @@ func ChartSources(e Chart) (o, h, c, l, v Series) {
 		closes = append(closes, c.Close)
 		volume = append(volume, c.Volume)
 	}
-	o = empty(open, e.StartTime(), e.Resolution(), "Open")
-	h = empty(high, e.StartTime(), e.Resolution(), "High")
-	c = empty(closes, e.StartTime(), e.Resolution(), "Close")
-	l = empty(low, e.StartTime(), e.Resolution(), "Low")
-	v = empty(volume, e.StartTime(), e.Resolution(), "Volume")
+	o = Constant(open, e.StartTime(), e.Resolution(), "Open")
+	h = Constant(high, e.StartTime(), e.Resolution(), "High")
+	c = Constant(closes, e.StartTime(), e.Resolution(), "Close")
+	l = Constant(low, e.StartTime(), e.Resolution(), "Low")
+	v = Constant(volume, e.StartTime(), e.Resolution(), "Volume")
 	return
 }

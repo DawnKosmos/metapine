@@ -79,6 +79,7 @@ func MFI(src Series, volume Series, len int) Series {
 	lower := Sum(Mult(volume, IfS(Not(con), 0, src)), len)
 	mfr := Div(upper, lower)
 	mfi := DivF(mfr, Add(mfr, 1), 100)
+	mfi.SetName("MFI")
 	return mfi
 }
 

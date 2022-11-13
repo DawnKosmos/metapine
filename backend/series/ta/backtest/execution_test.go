@@ -27,7 +27,7 @@ func TestExecution(t *testing.T) {
 	bt := strat.CreateStrategy("rsi cross over", buy, sell, sl, BTParameter{
 		Modus:      ALL,
 		Pyramiding: 1,
-		Fee: &FeeInfo{
+		Fee: &Fee{
 			Maker:    0.00015,
 			Taker:    0.0005,
 			Slippage: 1,

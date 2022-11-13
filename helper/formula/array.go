@@ -1,7 +1,7 @@
 package formula
 
 type calc interface {
-	int | int64 | float64 | float32
+	int | int64 | float64 | float32 | int32
 }
 
 func Average[T calc](f ...T) T {

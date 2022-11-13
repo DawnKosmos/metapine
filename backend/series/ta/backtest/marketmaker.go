@@ -11,7 +11,7 @@ type MarketMaker struct {
 	MaxSize float64
 }
 
-func (s *MarketMaker) CreateTrade(Side bool, ch []exchange.Candle, exitCandle int, indicators []SafeFloat, sizeInUsd float64, fee FeeInfo) (*Trade, error) {
+func (s *MarketMaker) CreateTrade(Side bool, ch []exchange.Candle, exitCandle int, indicators []SafeFloat, sizeInUsd float64, fee Fee) (*Trade, error) {
 	if exitCandle == 0 {
 		return nil, errors.New("same Candle")
 	}

@@ -17,6 +17,7 @@ type ResolutionStartTime interface {
 	StartTime() int64
 	Resolution() int64
 	Name() string
+	SetName(name string)
 }
 
 // ERS implements the ErrorResolutionStartTime and can be implemented in a Series and Condition
@@ -41,4 +42,8 @@ func (e *ERS[T]) Data() []T {
 
 func (e *ERS[T]) Name() string {
 	return e.name
+}
+
+func (e *ERS[T]) SetName(name string) {
+	e.name = name
 }

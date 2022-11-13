@@ -64,3 +64,33 @@ func MaCross(maFast func(s1 Series, len int) Series, maSlow func(s1 Series, len 
 	sell = Crossunder(fastMa, slowMa)
 	return
 }
+
+//To iterate an Indicator you have to implement the Iterator interface
+//Lets look at following indicator
+
+func maCross(maFast func(s1 Series, len int) Series, maSlow func(s1 Series, len int) Series, src Series, fast int, slow int) (buy Condition, sell Condition) {
+	fastMa := maFast(src, fast)
+	slowMa := maSlow(src, slow)
+
+	buy = Crossover(fastMa, slowMa)
+	sell = Crossunder(fastMa, slowMa)
+	return
+}
+
+func SolApeIter(oc2 Series, volume Series, ma func(s Series, l int) Series, len1, len2 int) (Condition, Condition) {
+	outR := Sma(Roc(oc2, len1), 2)
+	outB1 := ma(outR, len2)
+	outB2 := ma(outB1, len2)
+	outB := SubF(outB1, outB2, 2.0)
+	cc := Sub(outR, outB)
+	var c1 Series
+	if volume == nil {
+		c1 = Sma(cc, 2)
+	} else {
+		c1 = Vwma(cc, volume, 2)
+	}
+	c2, c3 := OffS(c1, 1), OffS(c1, 2)
+	buy := And(Greater(c1, c2), Smaller(c2, c3))
+	sell := And(Smaller(c1, c2), Greater(c2, c3))
+	return buy, sell
+}

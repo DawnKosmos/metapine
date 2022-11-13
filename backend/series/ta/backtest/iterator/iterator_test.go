@@ -6,6 +6,7 @@ import (
 	"github.com/DawnKosmos/metapine/backend/exchange/ftx"
 	"github.com/DawnKosmos/metapine/backend/series/ta"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest"
+	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/mode"
 	"testing"
 )
 
@@ -20,7 +21,6 @@ func (e *Example) StructsAdresse() ([]*int, []*ta.Series, []*func(series ta.Seri
 }
 
 func (e *Example) Calculation() (buy, sell ta.Condition) {
-	fmt.Println(e.src1.Name(), e.l1, e.l2)
 	return solape(e.src1, e.l1, e.l2)
 }
 
@@ -48,7 +48,7 @@ func TestIterator(t *testing.T) {
 	ch := ta.NewOHCLV(ee, "BTC-PERP", exchange.T2022, exchange.T2023, 3600*24)
 	close, oc2, hl2, open := ta.Close(ch), ta.OC2(ch), ta.HL2(ch), ta.Open(ch)
 
-	bt := backtest.InitFastBackTest(ch, backtest.ALL, 4, 0, -1, -1, []string{})
+	bt := backtest.NewFastBackTest(ch, mode.ALL, 4, 0, -1, -1, []string{})
 
 	it := New(&Example{})
 	it.RegisterInt(0, 5, 10, 1)
@@ -57,5 +57,7 @@ func TestIterator(t *testing.T) {
 
 	it.Run(bt)
 
-	fmt.Println(len(bt.ReturnResults()))
+	for _, v := range bt.ReturnResults() {
+		v.Print()
+	}
 }

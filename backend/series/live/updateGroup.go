@@ -9,7 +9,7 @@ const ONCLOSE UpdateMode = 0
 var ONTICK = -1
 
 /*
-The UpdateGroup manages that  calculations of an Indicator get Updated in the right order.
+The UpdateGroup manages that the series/condition calculations of an Indicator get Updated in the right order.
 */
 type UpdateGroup struct {
 	Name string
@@ -53,10 +53,3 @@ func (ug *UpdateGroup) Exit() {
 	ug.exit = true
 	ug.tick <- true
 }
-
-/*
-strategy.New(strategy.Parameters{})
-
-strategy.Long(strategy.size{account,10%},buy, startegy.ONCLOSE, reduceonly}
-
-*/

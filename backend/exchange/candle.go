@@ -90,3 +90,7 @@ func GenerateResolutionFunc(resInSeconds ...int64) func(int64) int64 {
 		return 3600
 	}
 }
+
+func (c Candle) OHCL4() float64 {
+	return (c.Open + c.Close + c.High + c.Low) / 4
+}

@@ -12,7 +12,7 @@ import (
 )
 
 var fnResolutionFunc = exchange.GenerateResolutionFunc(86400, 3600*3, 7200,
-	3600, 900, 60, 15)
+	3600, 900, 300, 60, 15)
 
 func checkResolution(res int64) int64 {
 	return fnResolutionFunc(res)
