@@ -5,4 +5,4 @@ metapine will enable it to run and backtest tradingstrategies in an Tradingview 
 
 Backtesting is working. Look in the example folder for some example
 
-Development stopped due to FTX bankrupt
+Development halted due to FTX bankrupt
