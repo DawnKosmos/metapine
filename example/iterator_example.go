@@ -36,9 +36,9 @@ func IterExample(ch *OHCLV, p backtest.Parameter) {
 	}
 	iter := IteratorExample{fn: fn}
 	it := iterator.New(&iter)
-	// Iterating the first int which is "fast" from 4 to 12 in +1 steps
+	// Iterating the first int which parameter name is "fast" from 4 to 12 in +1 steps
 	it.RegisterInt(0, 4, 12, 1)
-	// Iterating the second int which is "slow" from 3 to 14 in +2 steps
+	// Iterating the second int which parameter name is "slow" from 3 to 14 in +2 steps
 	it.RegisterInt(1, 3, 14, 2)
 	// Iterating the fastMa
 	it.RegisterFunctions(0, Sma, WrappedRsi, Ema, WrappedMFI)

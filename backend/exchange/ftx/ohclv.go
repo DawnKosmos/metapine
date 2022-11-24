@@ -33,6 +33,7 @@ func (f *FTX) OHCLV(ticker string, resolution int64, startTime time.Time, endTim
 		hp = append(c, hp...)
 		end = hp[0].StartTime.Unix() - 1
 	}
+
 	return exchange.ConvertChartResolution(newRes, resolution, hp)
 }
 
@@ -54,8 +55,8 @@ func (f *FTX) getOHCLV(ticker string, res int64, st int64, et int64) ([]exchange
 		return h.Result, err
 	}
 	err = processResponse(resp, &h)
-	return h.Result, nil
 
+	return h.Result, err
 }
 
 // checkResolution looking if the asked resolution is a valid one
