@@ -64,7 +64,6 @@ func Sync(pp ...*PNLGraph) {
 		3) Filter KGV
 		4) Fix ENDE
 	*/
-
 }
 
 func pnlGraphMin(pp ...*PNLGraph) (int64, int) {
@@ -102,5 +101,5 @@ func lcm(a, b int, integers ...int) int {
 }
 
 func fixStartLen(pp *PNLGraph) {
-	formula.Min()
+	formula.Min(5)
 }

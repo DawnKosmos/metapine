@@ -1,6 +1,7 @@
 package backtest
 
 import (
+	"fmt"
 	"github.com/DawnKosmos/metapine/backend/series/ta"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/mode"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/size"
@@ -8,32 +9,45 @@ import (
 	"sort"
 )
 
+// BackTest is what it says a struct to backtest
 type BackTest struct {
+	//OHCLV Data needed for calculation
 	ch ta.Chart
-	//PNL starting with first Candle
+	//TE describes how Trades get executed. You can choose simple market orders, or set multiple different limit orders or set stops
 	TE TradeExecution
-
+	//Lookup Parameters
 	Parameters Parameter
+	//Indicators are saved in a [][]SafeFloat(bool,float64) Array synched to the OHCLV data
 	Indicators [][]SafeFloat
-	Results    []*BackTestStrategy
+	//Lookup BackTestStrategy
+	Results []*BackTestStrategy
 }
 
+// BacktestStrategy saves the Results
 type BackTestStrategy struct {
+	//Name has the strategy name in it, and saves different parameters
 	Name string
-	Pnl  []float64
+	//PNL is the PNLchart, right now not implemented
+	Pnl []float64
 
+	//Lookup Parameters
 	Parameters Parameter
-	tr         []*Trade
-	TotalPnl   float64
-	Winrate    float64
-	AvgTrade   float64
+	//All the trades that got executed
+	tr []*Trade
+	//Sum of Pnl of the Trades
+	TotalPnl float64
+	//Winrate of the Trades
+	Winrate float64
+	//AvgTrade Gain
+	AvgTrade float64
+	lessAlgo func(v *BackTestStrategy) float64
 }
 
 func (b *BackTestStrategy) Trades() []*Trade {
 	return b.tr
 }
 
-func NewStrategy(ch ta.Chart, TE TradeExecution, parameters Parameter) *BackTest {
+func NewSimple(ch ta.Chart, TE TradeExecution, parameters Parameter) *BackTest {
 	return &BackTest{
 		ch:         ch,
 		TE:         TE,
@@ -41,6 +55,7 @@ func NewStrategy(ch ta.Chart, TE TradeExecution, parameters Parameter) *BackTest
 	}
 }
 
+// AddIndicators, fills the [][]SafeFloat with Series, OHCLV is also a Series
 func (bt *BackTest) AddIndicator(indicators ...ta.Series) *BackTest {
 	if len(indicators) == 0 {
 		return bt
@@ -79,20 +94,24 @@ func (bt *BackTest) AddIndicator(indicators ...ta.Series) *BackTest {
 	return bt
 }
 
-//Backtester Interface
-
-func (bt *BackTest) AddStrategy(buy, sell ta.Condition, values string) {
+// AddStrategy , Strategies are created with buy and sell signals(just bool) They open a Position and close the  contrarian one.
+func (bt *BackTest) AddStrategy(buy, sell ta.Condition, Name string) {
 	var b = new(BackTestStrategy)
+	//OHCLV, buy and sell have to match up the same size
 	ch, l, s := bt.ch.Data(), buy.Data(), sell.Data()
 	sl, _ := formula.MinInt(len(ch), len(l), len(s))
 	ch = ch[len(ch)-sl:]
 	l = l[len(l)-sl:]
 	s = s[len(s)-sl:]
+	b.lessAlgo = LessPnl
 
+	//Check if PnlGraph is supported
 	if bt.TE.GetInfo().CandlePnlSupport && bt.Parameters.PnlGraph {
 		b.Pnl = make([]float64, len(ch), len(ch))
 		bt.Parameters.PnlGraph = false
 	}
+
+	//Check if Indicators were added
 	var indicators [][]SafeFloat
 	if bt.Indicators != nil {
 		indicators = bt.Indicators[len(bt.Indicators)-sl:]
@@ -104,9 +123,9 @@ func (bt *BackTest) AddStrategy(buy, sell ta.Condition, values string) {
 
 	balance := bt.Parameters.Balance
 	parameters := bt.Parameters
-
 	var tempBalance float64
 
+	//Trades get Created here, this is a Simple Backtest. It does not support, having buy and sell strategies running next to each other.
 	for j := 0; j < len(ch)-1; j++ {
 		if l[j] {
 			for i := 0; i < min(len(indexShort), parameters.Pyramiding); i++ {
@@ -158,12 +177,14 @@ func (bt *BackTest) AddStrategy(buy, sell ta.Condition, values string) {
 
 	sort.Sort(Trades(tr))
 	b.tr = tr
-	b.Name = values
+	b.Name = Name
 	bt.Results = append(bt.Results, b)
 }
 
+// Split turns 2 Results Sets with Conditions
 func (bt *BackTest) Split(condition string, op Filter) {
 	var bb []*BackTestStrategy
+	fmt.Println(len(bt.Results))
 	for _, vv := range bt.Results {
 		var tt, tf []*Trade
 		for _, v := range vv.tr {
@@ -172,21 +193,29 @@ func (bt *BackTest) Split(condition string, op Filter) {
 			} else {
 				tf = append(tf, v)
 			}
+		}
+
+		if len(tt) > 0 {
 			bb = append(bb, &BackTestStrategy{
-				Name:       vv.Name + condition + "true",
+				Name:       vv.Name + "\t" + condition + " true",
 				Parameters: vv.Parameters,
 				tr:         tt,
-			}, &BackTestStrategy{
-
+				lessAlgo:   vv.lessAlgo,
+			})
+		}
+		if len(tf) > 0 {
+			bb = append(bb, &BackTestStrategy{
 				Parameters: vv.Parameters,
-				Name:       vv.Name + condition + "false",
+				Name:       vv.Name + "\t" + condition + " false",
 				tr:         tf,
+				lessAlgo:   vv.lessAlgo,
 			})
 		}
 	}
 	bt.Results = bb
 }
 
+// Splits LongsFromShorts
 func (bt *BackTest) LongShort() {
 	var bb []*BackTestStrategy
 	for _, vv := range bt.Results {
@@ -202,16 +231,19 @@ func (bt *BackTest) LongShort() {
 			Name:       vv.Name + "Longs",
 			Parameters: vv.Parameters,
 			tr:         tt,
+			lessAlgo:   vv.lessAlgo,
 		}, &BackTestStrategy{
 
 			Parameters: vv.Parameters,
 			Name:       vv.Name + "Shorts",
 			tr:         tf,
+			lessAlgo:   vv.lessAlgo,
 		})
 	}
 	bt.Results = bb
 }
 
+// Deletes The Trades if given conditions is false
 func (bt *BackTest) Filter(condition string, op Filter) {
 	var bb []*BackTestStrategy
 	for _, vv := range bt.Results {
@@ -225,11 +257,13 @@ func (bt *BackTest) Filter(condition string, op Filter) {
 			Name:       vv.Name + condition + " true",
 			Parameters: vv.Parameters,
 			tr:         tt,
+			lessAlgo:   vv.lessAlgo,
 		})
 	}
 	bt.Results = bb
 }
 
+// CalculatePNL Total PNL
 func (bt *BackTestStrategy) CalculatePNL() {
 	var tpnl float64
 	var win int
@@ -244,157 +278,29 @@ func (bt *BackTestStrategy) CalculatePNL() {
 
 	bt.Winrate = float64(win) / float64(len(bt.tr)) * 100
 	bt.TotalPnl = tpnl
+	bt.AvgTrade = bt.TotalPnl / float64(len(bt.tr))
 }
 
-/*
-func (bt *BackTest) CreateStrategy(name string, buy, sell ta.Condition, TE TradeExecution, parameters Parameter) *BackTestStrategy {
-	var b = new(BackTestStrategy)
-	b.Name = name
-	b.Parameters = parameters
-	if b.Parameters.Pyramiding == 0 {
-		b.Parameters.Pyramiding = 1
-	}
-	p := b.Parameters.Pyramiding
-
-	ch, l, s := bt.ch.Data(), buy.Data(), sell.Data()
-	sl, _ := formula.MinInt(len(ch), len(l), len(s))
-	ch = ch[len(ch)-sl:]
-	l = l[len(l)-sl:]
-	s = s[len(s)-sl:]
-	b.Pnl = make([]float64, len(ch), len(ch))
-	var indicators [][]SafeFloat
-	if bt.Indicators != nil {
-		indicators = bt.Indicators[len(bt.Indicators)-sl:]
-	} else {
-		indicators = make([][]SafeFloat, sl, sl)
-	}
-
-	var indexLong, indexShort []int
-	var tr []*Trade
-
-	if !TE.GetInfo().CandlePnlSupport {
-		b.Parameters.PnlGraph = false
-	}
-	balance := parameters.Balance
-	var tempBalance float64
-
-	for j := 0; j < len(ch)-1; j++ {
-		if l[j] {
-			for i := 0; i < min(len(indexShort), p); i++ {
-				index := indexShort[i]
-				t, err := TE.CreateTrade(SHORT, ch[index+1:], j-index, indicators[index], balance, *parameters.Fee, b.Parameters.PnlGraph)
-				if err != nil {
-					//fmt.Println("Create Shorts at", j, err)
-					continue
-				}
-				tr = append(tr, t)
-				if parameters.SizeType == size.Account {
-					tempBalance += t.RealisedPNL()
-				}
-			}
-			if parameters.SizeType == size.Account {
-				balance += tempBalance
-				tempBalance = 0
-			}
-
-			indexShort = indexShort[:0]
-			if parameters.Modus != OnlySHORT {
-				indexLong = append(indexLong, j)
-			}
-		}
-		if s[j] {
-			for i := 0; i < min(len(indexLong), p); i++ {
-				index := indexLong[i]
-				t, err := TE.CreateTrade(LONG, ch[index+1:], j-index, indicators[index], balance, *parameters.Fee, b.Parameters.PnlGraph)
-				if err != nil {
-					//fmt.Println("Create Longs at", j, err)
-					continue
-				}
-				tr = append(tr, t)
-				if parameters.SizeType == size.Account {
-					tempBalance += t.RealisedPNL()
-				}
-			}
-			if parameters.SizeType == size.Account {
-				balance += tempBalance
-				tempBalance = 0
-			}
-
-			indexLong = indexLong[:0]
-			if parameters.Modus != OnlyLONG {
-				indexShort = append(indexShort, j)
-			}
-		}
-	}
-	sort.Sort(Trades(tr))
-	b.tr = tr
-	return b
+func (bt *BackTestStrategy) ChangeLessAlgo(fn func(b *BackTestStrategy) float64) {
+	bt.lessAlgo = fn
 }
 
-func (b *BackTestStrategy) Filter(info string, op Filter) *BackTestStrategy {
-	var tt []*Trade
-	for _, v := range b.tr {
-		if op(v.Indicator) {
-			tt = append(tt, v)
-		}
-	}
-	return &BackTestStrategy{
-		Name:       b.Name + info,
-		Parameters: b.Parameters,
-		tr:         tt,
-	}
+func LessPnl(b *BackTestStrategy) float64 {
+	return b.TotalPnl
 }
 
-func (b *BackTestStrategy) Split(info string, op Filter) (*BackTestStrategy, *BackTestStrategy) {
-	var tt, tf []*Trade
-	for _, v := range b.tr {
-		if op(v.Indicator) {
-			tt = append(tt, v)
-		} else {
-			tf = append(tf, v)
-		}
-	}
-
-	return &BackTestStrategy{
-			Name:       b.Name + info + "true",
-			Parameters: b.Parameters,
-			tr:         tt,
-		}, &BackTestStrategy{
-
-			Parameters: b.Parameters,
-			Name:       b.Name + info + "false",
-			tr:         tf,
-		}
+func LessWinrate(b *BackTestStrategy) float64 {
+	return b.Winrate
 }
 
-func (b *BackTestStrategy) LongsAndShorts() (*BackTestStrategy, *BackTestStrategy) {
-	var tt, tf []*Trade
-	for _, v := range b.tr {
-		if v.Side {
-			tt = append(tt, v)
-		} else {
-			tf = append(tf, v)
-		}
-	}
-	return &BackTestStrategy{
-			Name:       b.Name + "| longs",
-			Parameters: b.Parameters,
-			tr:         tt,
-		}, &BackTestStrategy{
-
-			Parameters: b.Parameters,
-			Name:       b.Name + "| shorts",
-			tr:         tf,
-		}
+func LessAvgTrade(b *BackTestStrategy) float64 {
+	return b.AvgTrade
 }
-*/
-
-// TRADES
 
 type BackTestStrategies []*BackTestStrategy
 
 func (t BackTestStrategies) Less(i, j int) bool {
-	return t[i].TotalPnl < t[j].TotalPnl
+	return t[i].lessAlgo(t[i]) < t[j].lessAlgo(t[j])
 }
 
 func (t BackTestStrategies) Swap(i, j int) {

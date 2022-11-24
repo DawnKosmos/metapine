@@ -1,5 +1,6 @@
 package backtest
 
+// The Values of the Indicators are safed in an Array of floats
 type Filter func(sf []SafeFloat) bool
 
 func Greater(index1 int, index2 int) Filter {

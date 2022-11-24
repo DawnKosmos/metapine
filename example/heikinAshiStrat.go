@@ -13,7 +13,7 @@ func HeikinAshiStrategy(ch *OHCLV) {
 	o, c := Open(ha), Close(ha)
 
 	TE := tradeexecution.NewScaledLimit(0, 2, 10).Distribution(distribution.Exponential).Size(0.25)
-	bt := backtest.NewStrategy(ch, TE, paras)
+	bt := backtest.NewSimple(ch, TE, paras)
 
 	o1, c1 := OffS(o, 1), OffS(c, 1)
 

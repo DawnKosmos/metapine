@@ -1,5 +1,7 @@
 package backtest
 
+//experimentally not finished
+
 type FilterOperation struct {
 	Name string
 	Op   Filter

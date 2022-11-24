@@ -23,10 +23,10 @@ func IterExample(ch *OHCLV, p backtest.Parameter) {
 		return MFI(src, volume, l)
 	}
 
-	//TE executes the trades by placing 10 orders from 0,10 with equal size, which sum is equal to the total trade size
+	//TE executes the trades by placing 10 orders from 0,10 with equal size(distribution normal), which sum is equal to the total trade size
 	TE := tradeexecution.NewScaledLimit(0, 5, 10).Distribution(distribution.Normal).Size(1) // 1 means 100%
 	//A New Startegy
-	strat := backtest.NewStrategy(ch, TE, p)
+	strat := backtest.NewSimple(ch, TE, p)
 
 	//Timestap to measure how long the permutation took
 	tNow := time.Now()
