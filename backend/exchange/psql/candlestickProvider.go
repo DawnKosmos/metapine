@@ -3,6 +3,7 @@ package psql
 import (
 	"errors"
 	"github.com/DawnKosmos/metapine/backend/exchange"
+	"github.com/DawnKosmos/metapine/backend/exchange/deribit"
 	"github.com/DawnKosmos/metapine/backend/exchange/ftx"
 	"github.com/DawnKosmos/metapine/backend/exchange/psql/gen"
 	"strings"
@@ -21,12 +22,14 @@ func New(name string) (*Exchange, error) {
 	case "ftx":
 		return &Exchange{exchange: name, ee: ftx.New()}, nil
 	case "index":
-		return &Exchange{exchange: name}, nil
-	case "bitmex", "coinbase", "phemex", "deribit", "bybit":
+	case "deribit":
+		return &Exchange{exchange: name, ee: deribit.New()}, nil
+	case "bitmex", "coinbase", "phemex", "bybit":
 		return nil, errors.New("Exchange not yet implemented")
 	default:
 		return nil, errors.New("exchange does not exist")
 	}
+	return nil, nil
 }
 
 func (e *Exchange) OHCLV(ticker string, resolution int64, start time.Time, end time.Time) ([]exchange.Candle, error) {
