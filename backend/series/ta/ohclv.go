@@ -51,6 +51,7 @@ func (o *OHCLV) Name() string {
 	return o.name
 }
 
+// Returns OHCLV Data
 func ChartSources(e Chart) (o, h, c, l, v Series) {
 	ch := e.Data()
 	open := make([]float64, 0, len(ch))

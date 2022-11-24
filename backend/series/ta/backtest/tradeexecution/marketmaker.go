@@ -1,8 +1,9 @@
-package backtest
+package tradeexecution
 
 import (
 	"errors"
 	"github.com/DawnKosmos/metapine/backend/exchange"
+	"github.com/DawnKosmos/metapine/backend/series/ta/backtest"
 )
 
 type MarketMaker struct {
@@ -11,12 +12,12 @@ type MarketMaker struct {
 	MaxSize float64
 }
 
-func (s *MarketMaker) CreateTrade(Side bool, ch []exchange.Candle, exitCandle int, indicators []SafeFloat, sizeInUsd float64, fee Fee) (*Trade, error) {
+func (s *MarketMaker) CreateTrade(Side bool, ch []exchange.Candle, exitCandle int, indicators []backtest.SafeFloat, sizeInUsd float64, fee backtest.Fee) (*backtest.Trade, error) {
 	if exitCandle == 0 {
 		return nil, errors.New("same Candle")
 	}
 
-	t := EmptyTrade(Side, ch[0].StartTime)
+	t := backtest.EmptyTrade(Side, ch[0].StartTime)
 
 	//mp := ch[0].Open
 	if Side {
@@ -29,7 +30,7 @@ func (s *MarketMaker) CreateTrade(Side bool, ch []exchange.Candle, exitCandle in
 
 }
 
-func (s *MarketMaker) GetInfo() TEInfo {
+func (s *MarketMaker) GetInfo() backtest.TEInfo {
 	//TODO implement me
 	panic("implement me")
 }

@@ -11,10 +11,9 @@ import (
 	"github.com/DawnKosmos/metapine/helper/formula"
 )
 
-//fastBacktest should be used it you are permutation massive amounts of indicators
+//fastBacktest should be used it you are permutation massive amounts of parameters
 
 //Fast Backtest
-
 type FastBacktest struct {
 	ch         ta.Chart
 	pyramiding int
@@ -30,9 +29,10 @@ type FastBacktest struct {
 }
 
 /*
-NewFastBackTest should be used if you are iterating with a lot different parameters. It is not as detailed as a n ordinary backtest but it does its job.
+NewFastBackTest should be used if you are iterating with a lot different parameters. It is not as detailed as an ordinary backtest but it does its job.
+st, et -1 means trading whole Data
 */
-func NewFastBackTest(ch ta.Chart, mode mode.Mode, pyramiding int, fee float64, st int64, et int64, parameter []string) *FastBacktest { //st, et -1 means trading whole Data
+func NewFastBackTest(ch ta.Chart, mode mode.Mode, pyramiding int, fee float64, st int64, et int64, parameter []string) *FastBacktest {
 	var p int = 1
 	if pyramiding > 1 {
 		p = pyramiding

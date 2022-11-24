@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/DawnKosmos/metapine/backend/exchange/deribit"
 	"github.com/DawnKosmos/metapine/backend/exchange/psql"
 	"github.com/DawnKosmos/metapine/backend/series/ta"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest"
@@ -35,15 +36,15 @@ var paras = backtest.Parameter{
 
 func main() {
 	psql.SetPSQL("localhost", "postgres", "metapine", "admin", 5432)
-	exch, _ := psql.New("ftx")
-	//exch := ftx.New()
+	//	exch, _ := psql.New("ftx")
+	exch := deribit.New()
 
-	ch := ta.NewOHCLV(exch, "BTC-PERP", time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC), time.Date(2022, 10, 29, 0, 0, 0, 0, time.UTC), 4*3600)
+	ch := ta.NewOHCLV(exch, "BTC-PERPETUAL", time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC), time.Date(2022, 11, 23, 0, 0, 0, 0, time.UTC), 4*3600)
 	if len(ch.Data()) == 0 {
 		os.Exit(1)
 	}
 
-	IterExample(ch, paras)
+	FilterExample(ch, paras)
 }
 
 type IteratorRibbon struct {

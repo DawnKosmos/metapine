@@ -1,5 +1,7 @@
 package formula
 
+// This package just provides different formulas i use
+
 type calc interface {
 	int | int64 | float64 | float32 | int32
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type Trade struct {
-	Side                             bool
+	Side                             bool    // True = Long, False = Short
 	AvgBuy, AvgSell, avgPrice        float64 //the AvgBuy/Sell is needed to calculate realisedPNL, avgPrice is used for PNLCandle
 	EntrySignalTime, CloseSignalTime time.Time
 

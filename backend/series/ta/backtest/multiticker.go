@@ -35,7 +35,7 @@ func (s *MultiTicker) CreateResult(tickers []string, ee exchange.CandleProvider,
 			indis = append(indis, vv(ch))
 		}
 
-		ss := NewStrategy(ch).AddIndicator(indis...)
+		ss := NewSimple(ch).AddIndicator(indis...)
 		buy, sell := s.Algo(ch)
 		bb = append(bb, ss.CreateStrategy(v, buy, sell, s.TE, s.Parameters))
 	}
