@@ -24,7 +24,7 @@ func IterExample(ch *OHCLV, p backtest.Parameter) {
 	}
 
 	//TE executes the trades by placing 10 orders from 0,10 with equal size(distribution normal), which sum is equal to the total trade size
-	TE := tradeexecution.NewScaledLimit(0, 5, 10).Distribution(distribution.Normal).Size(1) // 1 means 100%
+	TE := tradeexecution.NewScaledLimit(0, 7, 10).Distribution(distribution.OpenAndDipsExponential(0.5)).Size(1.5) // 1 means 100%
 	//A New Startegy
 	strat := backtest.NewSimple(ch, TE, p)
 
@@ -37,9 +37,9 @@ func IterExample(ch *OHCLV, p backtest.Parameter) {
 	iter := IteratorExample{fn: fn}
 	it := iterator.New(&iter)
 	// Iterating the first int which parameter name is "fast" from 4 to 12 in +1 steps
-	it.RegisterInt(0, 4, 12, 1)
+	it.RegisterInt(0, 5, 12, 1)
 	// Iterating the second int which parameter name is "slow" from 3 to 14 in +2 steps
-	it.RegisterInt(1, 3, 14, 2)
+	it.RegisterInt(1, 4, 14, 2)
 	// Iterating the fastMa
 	it.RegisterFunctions(0, Sma, WrappedRsi, Ema, WrappedMFI)
 	// Iteration The Sources
@@ -49,6 +49,7 @@ func IterExample(ch *OHCLV, p backtest.Parameter) {
 
 	for _, v := range strat.Results {
 		v.CalculatePNL()
+		v.ChangeLessAlgo(backtest.LessPnl)
 	}
 	//Sort the results regarding TotalPNL
 	sort.Sort(backtest.BackTestStrategies(strat.Results))

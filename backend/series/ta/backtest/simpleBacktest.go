@@ -1,7 +1,6 @@
 package backtest
 
 import (
-	"fmt"
 	"github.com/DawnKosmos/metapine/backend/series/ta"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/mode"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/size"
@@ -79,9 +78,8 @@ func (bt *BackTest) AddIndicator(indicators ...ta.Series) *BackTest {
 		j++
 	}
 
+	var i int = 1
 	for _, vv := range indicators[1:] {
-
-		var i int = 1
 		f = vv.Data()
 		j = len(d) - len(f)
 		for _, v := range f {
@@ -184,7 +182,6 @@ func (bt *BackTest) AddStrategy(buy, sell ta.Condition, Name string) {
 // Split turns 2 Results Sets with Conditions
 func (bt *BackTest) Split(condition string, op Filter) {
 	var bb []*BackTestStrategy
-	fmt.Println(len(bt.Results))
 	for _, vv := range bt.Results {
 		var tt, tf []*Trade
 		for _, v := range vv.tr {
@@ -254,7 +251,7 @@ func (bt *BackTest) Filter(condition string, op Filter) {
 			}
 		}
 		bb = append(bb, &BackTestStrategy{
-			Name:       vv.Name + condition + " true",
+			Name:       vv.Name + "\t" + condition + " true",
 			Parameters: vv.Parameters,
 			tr:         tt,
 			lessAlgo:   vv.lessAlgo,
