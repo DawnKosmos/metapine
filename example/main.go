@@ -9,6 +9,7 @@ import (
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/mode"
 	"github.com/DawnKosmos/metapine/backend/series/ta/backtest/size"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -21,12 +22,15 @@ Think of filtering
 Visual representation
 */
 
+var kek = sync.Pool{New: func()interface{}(return ta.Rsi(nil,14))}
+
+
 var paras = backtest.Parameter{
 	Modus:      mode.ALL,
 	Pyramiding: 1,
 	Fee: &backtest.Fee{
-		Maker:    -0.00005,
-		Taker:    0.0005,
+		Maker:    0,
+		Taker:    0.0000,
 		Slippage: 0,
 	},
 	Balance:  10000,
@@ -39,12 +43,13 @@ func main() {
 	//	exch, _ := psql.New("ftx")
 	exch := deribit.New()
 
-	ch := ta.NewOHCLV(exch, "BTC-PERPETUAL", time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC), time.Date(2022, 11, 23, 0, 0, 0, 0, time.UTC), 4*3600)
+	ch := ta.NewOHCLV(exch, "BTC-PERPETUAL", time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC), time.Date(2022, 11, 27, 0, 0, 0, 0, time.UTC), 4*3600)
 	if len(ch.Data()) == 0 {
 		os.Exit(1)
 	}
 
-	FilterExample(ch, paras)
+
+	Example(ch, paras)
 }
 
 type IteratorRibbon struct {
@@ -86,5 +91,6 @@ func solape(oc2 ta.Series, volume ta.Series, len1, len2 int) (ta.Condition, ta.C
 }
 
 func WrappedRsi(src ta.Series, l int) ta.Series {
+	kek.Put()
 	return ta.Rsi(src, l)
 }
